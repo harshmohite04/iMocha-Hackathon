@@ -116,6 +116,70 @@ bootstrapApplication(AppComponent).catch(err => console.error(err));
   <title>Candidate App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/styles.css">
+  <script>
+    // Intercept console methods and forward to parent window
+    (function() {
+      var methods = ['log', 'warn', 'error', 'info', 'debug'];
+      methods.forEach(function(method) {
+        var original = console[method];
+        console[method] = function() {
+          // Skip Vite/HMR internal messages
+          var firstArg = arguments[0];
+          var skip = false;
+          if (typeof firstArg === 'string') {
+            var l = firstArg.toLowerCase();
+            if (l.indexOf('[vite]') !== -1 || l.indexOf('[hmr]') !== -1 || l.indexOf('vite') === 0
+                || l.indexOf('connecting') !== -1 || l.indexOf('connected') !== -1
+                || l.indexOf('hot updated') !== -1 || l.indexOf('page reload') !== -1) {
+              skip = true;
+            }
+          }
+          if (firstArg && typeof firstArg === 'string' && firstArg.indexOf('%c') === 0 && arguments.length > 1) {
+            var second = String(arguments[1]);
+            if (second.indexOf('color:') !== -1 && (String(arguments[0]).indexOf('vite') !== -1 || String(arguments[0]).indexOf('Vite') !== -1)) {
+              skip = true;
+            }
+          }
+          var args = Array.from(arguments).map(function(a) {
+            try { return typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a); }
+            catch(e) { return String(a); }
+          });
+          try {
+            if (!skip) window.parent.postMessage({
+              type: '__CONSOLE__',
+              method: method,
+              args: args,
+              timestamp: Date.now()
+            }, '*');
+            }
+          } catch(e) {}
+          original.apply(console, arguments);
+        };
+      });
+      // Catch uncaught errors
+      window.addEventListener('error', function(e) {
+        try {
+          window.parent.postMessage({
+            type: '__CONSOLE__',
+            method: 'error',
+            args: ['Uncaught ' + (e.error ? e.error.stack || e.error.message : e.message)],
+            timestamp: Date.now()
+          }, '*');
+        } catch(ex) {}
+      });
+      // Catch unhandled promise rejections
+      window.addEventListener('unhandledrejection', function(e) {
+        try {
+          window.parent.postMessage({
+            type: '__CONSOLE__',
+            method: 'error',
+            args: ['Unhandled Promise Rejection: ' + (e.reason ? e.reason.stack || e.reason.message || String(e.reason) : 'unknown')],
+            timestamp: Date.now()
+          }, '*');
+        } catch(ex) {}
+      });
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>

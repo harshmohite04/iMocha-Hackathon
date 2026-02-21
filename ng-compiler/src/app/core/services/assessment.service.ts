@@ -1,5 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { Problem, TestSuite } from '../models/problem.model';
+import { VirtualFile } from '../models/virtual-file.model';
 import { PROBLEMS, PROBLEM_TEST_SPECS } from '../constants/problems';
 import { DEFAULT_ANGULAR_PROJECT } from '../constants/default-angular-project';
 import { WebContainerService, BootStage } from './webcontainer.service';
@@ -32,34 +33,51 @@ export class AssessmentService {
     // Connect FileSystemService to WebContainerService
     this.fileSystem.setWebContainerService(this.webContainer);
 
-    // Boot WebContainer
+    // Boot WebContainer (quick ~2s)
     await this.webContainer.boot();
 
     // Build the file system tree: default project + starter files + test specs
     const tree = this.buildFileSystemTree(problem);
     await this.webContainer.mountFiles(tree);
 
-    // Install dependencies
-    const success = await this.webContainer.installDependencies();
-    if (!success) throw new Error('npm install failed');
-
-    // Start dev server
-    await this.webContainer.startDevServer();
-
-    // Load files into editor
+    // Load files into editor immediately so user can start coding
     this.fileSystem.loadFiles(problem.starterFiles);
 
     // Start timer
     this.timer.start(problem.timeLimit, () => this.submit());
+
+    // Run npm install + dev server in background (non-blocking)
+    this.bootstrapDevServer();
+  }
+
+  private async bootstrapDevServer(): Promise<void> {
+    try {
+      const success = await this.webContainer.installDependencies();
+      if (!success) {
+        console.error('npm install failed');
+        return;
+      }
+      await this.webContainer.startDevServer();
+    } catch (err) {
+      console.error('Background dev server bootstrap failed:', err);
+    }
   }
 
   private buildFileSystemTree(problem: Problem): FileSystemTree {
     // Start with the default Angular project
     const tree: FileSystemTree = { ...DEFAULT_ANGULAR_PROJECT };
 
-    // Override with starter files
+    // Mount all starter files (including HTML/CSS for test specs to read)
     for (const file of problem.starterFiles) {
       this.setFileInTree(tree, file.path, file.content);
+    }
+
+    // For .component.ts files with templateUrl/styleUrl, also mount an inlined version
+    for (const file of problem.starterFiles) {
+      if (file.path.endsWith('.component.ts') && (file.content.includes('templateUrl') || file.content.includes('styleUrl'))) {
+        const inlined = this.inlineTemplateAndStyles(file, problem.starterFiles);
+        this.setFileInTree(tree, file.path, inlined);
+      }
     }
 
     // Mount test specs
@@ -69,6 +87,33 @@ export class AssessmentService {
     }
 
     return tree;
+  }
+
+  private inlineTemplateAndStyles(tsFile: VirtualFile, allFiles: VirtualFile[]): string {
+    let result = tsFile.content;
+    const dir = tsFile.path.substring(0, tsFile.path.lastIndexOf('/'));
+
+    const templateMatch = result.match(/templateUrl\s*:\s*['"]\.\/([^'"]+)['"]/);
+    if (templateMatch) {
+      const htmlPath = dir + '/' + templateMatch[1];
+      const htmlFile = allFiles.find((f) => f.path === htmlPath);
+      if (htmlFile) {
+        const escaped = htmlFile.content.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+        result = result.replace(templateMatch[0], 'template: `' + escaped + '`');
+      }
+    }
+
+    const styleMatch = result.match(/styleUrl\s*:\s*['"]\.\/([^'"]+)['"]/);
+    if (styleMatch) {
+      const cssPath = dir + '/' + styleMatch[1];
+      const cssFile = allFiles.find((f) => f.path === cssPath);
+      if (cssFile) {
+        const escaped = cssFile.content.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+        result = result.replace(styleMatch[0], 'styles: [`' + escaped + '`]');
+      }
+    }
+
+    return result;
   }
 
   private setFileInTree(tree: FileSystemTree, filePath: string, content: string): void {

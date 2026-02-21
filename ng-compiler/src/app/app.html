@@ -82,48 +82,124 @@
   </div>
 }
 
-<!-- Main Workspace (shown when problem is loaded and not submitted) -->
+<!-- Main Workspace -->
 @if (assessment.currentProblem() && !assessment.isSubmitted()) {
-  <div class="workspace-layout vh-100 d-flex flex-column" [class.dark-theme]="isDarkTheme()">
-    <!-- Header with tabs, timer, theme -->
+  <div class="workspace-layout vh-100 d-flex flex-column">
+    <!-- Top: Header with tabs, timer, theme -->
     <app-workspace-header
       [isDarkTheme]="isDarkTheme()"
       (themeToggle)="toggleTheme()" />
 
-    <!-- Main content area -->
-    <div class="flex-grow-1 overflow-hidden">
-      <app-split-pane direction="horizontal" [initialSplit]="25">
-        <!-- Left: Problem + File Tree -->
-        <div first-pane class="h-100 d-flex flex-column">
-          <app-split-pane direction="vertical" [initialSplit]="60">
-            <app-problem-panel first-pane />
-            <app-file-tree second-pane />
-          </app-split-pane>
+    <!-- Middle: Main content (sidebar + editor) -->
+    <div class="main-row flex-grow-1 d-flex overflow-hidden">
+      <!-- Left Sidebar: Problem + File Tree -->
+      <div class="sidebar d-flex flex-column" [style.width.px]="sidebarWidth()">
+        <!-- Sidebar tabs -->
+        <div class="sidebar-tabs d-flex">
+          <button class="sidebar-tab" [class.active]="sidebarTab() === 'problem'"
+                  (click)="sidebarTab.set('problem')">
+            <i class="bi bi-book me-1"></i> Problem
+          </button>
+          <button class="sidebar-tab" [class.active]="sidebarTab() === 'files'"
+                  (click)="sidebarTab.set('files')">
+            <i class="bi bi-folder2-open me-1"></i> Files
+          </button>
         </div>
+        <div class="sidebar-content flex-grow-1 overflow-hidden">
+          @if (sidebarTab() === 'problem') {
+            <app-problem-panel />
+          } @else {
+            <app-file-tree />
+          }
+        </div>
+      </div>
 
-        <!-- Right: Editor + Preview + Tests -->
-        <div second-pane class="h-100">
-          <app-split-pane direction="horizontal" [initialSplit]="55">
-            <!-- Center: Code Editor -->
-            <div first-pane class="h-100">
-              <app-code-editor [theme]="isDarkTheme() ? 'vs-dark' : 'vs'" />
-            </div>
+      <!-- Sidebar resize handle -->
+      <div class="resize-handle-v" (mousedown)="startSidebarDrag($event)"></div>
 
-            <!-- Right: Preview + Tests + Console -->
-            <div second-pane class="h-100 d-flex flex-column">
-              <app-split-pane direction="vertical" [initialSplit]="50">
-                <app-preview-panel first-pane />
-                <div second-pane class="d-flex flex-column h-100">
-                  <app-split-pane direction="vertical" [initialSplit]="60">
-                    <app-test-results-panel first-pane />
-                    <app-console-output second-pane />
-                  </app-split-pane>
+      <!-- Right: Code Editor -->
+      <div class="editor-area flex-grow-1 d-flex flex-column overflow-hidden">
+        <app-code-editor [theme]="isDarkTheme() ? 'vs-dark' : 'vs'" />
+      </div>
+    </div>
+
+    <!-- Bottom Panel resize handle -->
+    <div class="resize-handle-h" (mousedown)="startBottomDrag($event)"></div>
+
+    <!-- Bottom: Tabbed Panel (Console / Preview / Tests) -->
+    <div class="bottom-panel d-flex flex-column" [style.height.px]="bottomPanelHeight()">
+      <div class="bottom-tabs d-flex align-items-center">
+        <button class="bottom-tab" [class.active]="bottomTab() === 'terminal'"
+                (click)="bottomTab.set('terminal')">
+          <i class="bi bi-terminal me-1"></i> Terminal
+          @if (webContainer.serverOutput().length > 0) {
+            <span class="activity-dot"></span>
+          }
+        </button>
+        <button class="bottom-tab" [class.active]="bottomTab() === 'console'"
+                (click)="bottomTab.set('console')">
+          <i class="bi bi-journal-code me-1"></i> Console
+          @if (appConsole.count() > 0) {
+            <span class="badge bg-secondary ms-1" style="font-size: 9px;">{{ appConsole.count() }}</span>
+          }
+          @if (appConsole.errorCount() > 0) {
+            <span class="badge bg-danger ms-1" style="font-size: 9px;">{{ appConsole.errorCount() }}</span>
+          }
+        </button>
+        <button class="bottom-tab" [class.active]="bottomTab() === 'preview'"
+                (click)="bottomTab.set('preview')">
+          <i class="bi bi-eye me-1"></i> Preview
+          @if (webContainer.previewUrl()) {
+            <span class="badge bg-success ms-1" style="font-size: 9px;">Live</span>
+          }
+        </button>
+        <button class="bottom-tab" [class.active]="bottomTab() === 'tests'"
+                (click)="bottomTab.set('tests')">
+          <i class="bi bi-check2-square me-1"></i> Tests
+        </button>
+        <button class="bottom-tab" [class.active]="bottomTab() === 'errors'"
+                (click)="bottomTab.set('errors')">
+          <i class="bi bi-exclamation-triangle me-1"></i> Problems
+          @if (compilation.hasErrors()) {
+            <span class="badge bg-danger ms-1" style="font-size: 9px;">{{ compilation.errors().length }}</span>
+          }
+        </button>
+
+        <!-- Right side: collapse/expand -->
+        <div class="ms-auto d-flex align-items-center gap-1 pe-2">
+          <button class="bottom-tab-btn" (click)="toggleBottomPanel()" title="Toggle panel">
+            <i [class]="bottomPanelHeight() > 50 ? 'bi bi-chevron-down' : 'bi bi-chevron-up'"></i>
+          </button>
+        </div>
+      </div>
+      <div class="bottom-content flex-grow-1 overflow-hidden">
+        @switch (bottomTab()) {
+          @case ('terminal') { <app-console-output /> }
+          @case ('console') { <app-app-console /> }
+          @case ('preview') { <app-preview-panel /> }
+          @case ('tests') { <app-test-results-panel /> }
+          @case ('errors') {
+            <div class="errors-panel p-2">
+              @if (compilation.errors().length === 0) {
+                <div class="text-center text-muted py-3">
+                  <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                  <p class="mt-2 mb-0">No problems detected</p>
                 </div>
-              </app-split-pane>
+              } @else {
+                @for (error of compilation.errors(); track $index) {
+                  <div class="error-row d-flex align-items-start p-2 mb-1">
+                    <i class="bi bi-x-circle-fill text-danger me-2 mt-1"></i>
+                    <div>
+                      <code class="text-warning">{{ error.file }}:{{ error.line }}:{{ error.column }}</code>
+                      <span class="ms-2 text-light">{{ error.message }}</span>
+                    </div>
+                  </div>
+                }
+              }
             </div>
-          </app-split-pane>
-        </div>
-      </app-split-pane>
+          }
+        }
+      </div>
     </div>
 
     <!-- Bottom Toolbar -->

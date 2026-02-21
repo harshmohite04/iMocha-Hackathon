@@ -65,7 +65,7 @@ export class LoadingOverlayComponent {
 
   visible = computed(() => {
     const s = this.stage();
-    return s !== 'idle' && s !== 'ready' && s !== 'error';
+    return s === 'booting';
   });
 
   stageLabel = computed(() => {

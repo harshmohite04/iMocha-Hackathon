@@ -44,16 +44,34 @@ import { TodoListComponent } from './todo-list/todo-list.component';
   selector: 'app-root',
   standalone: true,
   imports: [TodoListComponent],
-  template: \`
-    <div style="max-width: 600px; margin: 20px auto;">
-      <h1>My Todo App</h1>
-      <app-todo-list />
-    </div>
-  \`,
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.css',
 })
 export class AppComponent {}
 `,
         language: 'typescript',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/app.component.html',
+        content: `<div class="container">
+  <h1>My Todo App</h1>
+  <app-todo-list />
+</div>
+`,
+        language: 'html',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/app.component.css',
+        content: `.container {
+  max-width: 600px;
+  margin: 20px auto;
+}
+`,
+        language: 'css',
         readOnly: false,
         dirty: false,
       },
@@ -64,16 +82,39 @@ export class AppComponent {}
 @Component({
   selector: 'app-todo-list',
   standalone: true,
-  template: \`
-    <!-- TODO: Implement the todo list template -->
-    <p>Implement the todo list here!</p>
-  \`,
+  templateUrl: './todo-list.component.html',
+  styleUrl: './todo-list.component.css',
 })
 export class TodoListComponent {
   // TODO: Implement todo list logic using signals
+  // Hints:
+  //   - Use signal<string[]>([]) for the todos list
+  //   - Create addTodo() and removeTodo(index) methods
 }
 `,
         language: 'typescript',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/todo-list/todo-list.component.html',
+        content: `<!-- TODO: Implement the todo list template -->
+<!-- Hints:
+  - Add an <input> for typing new todos
+  - Add a button to add the todo
+  - Use @for to loop through todos and display each with a Remove button
+-->
+<p>Implement the todo list here!</p>
+`,
+        language: 'html',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/todo-list/todo-list.component.css',
+        content: `/* TODO: Style the todo list */
+`,
+        language: 'css',
         readOnly: false,
         dirty: false,
       },
@@ -134,16 +175,35 @@ import { CounterComponent } from './counter/counter.component';
   selector: 'app-root',
   standalone: true,
   imports: [CounterComponent],
-  template: \`
-    <div style="max-width: 400px; margin: 20px auto; text-align: center;">
-      <h1>Counter App</h1>
-      <app-counter />
-    </div>
-  \`,
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.css',
 })
 export class AppComponent {}
 `,
         language: 'typescript',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/app.component.html',
+        content: `<div class="container">
+  <h1>Counter App</h1>
+  <app-counter />
+</div>
+`,
+        language: 'html',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/app.component.css',
+        content: `.container {
+  max-width: 400px;
+  margin: 20px auto;
+  text-align: center;
+}
+`,
+        language: 'css',
         readOnly: false,
         dirty: false,
       },
@@ -154,6 +214,12 @@ export class AppComponent {}
 @Injectable({ providedIn: 'root' })
 export class CounterService {
   // TODO: Implement counter service with signals
+  // Requirements:
+  //   - count: a writable signal initialized to 0
+  //   - doubleCount: a computed signal that returns count * 2
+  //   - increment(): increases count by 1
+  //   - decrement(): decreases count by 1
+  //   - reset(): sets count back to 0
 }
 `,
         language: 'typescript',
@@ -168,16 +234,32 @@ import { CounterService } from './counter.service';
 @Component({
   selector: 'app-counter',
   standalone: true,
-  template: \`
-    <!-- TODO: Implement the counter template -->
-    <p>Implement the counter here!</p>
-  \`,
+  templateUrl: './counter.component.html',
+  styleUrl: './counter.component.css',
 })
 export class CounterComponent {
   // TODO: Inject CounterService and wire up the template
 }
 `,
         language: 'typescript',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/counter/counter.component.html',
+        content: `<!-- TODO: Implement the counter template -->
+<!-- Display count, doubleCount, and add Increment/Decrement/Reset buttons -->
+<p>Implement the counter here!</p>
+`,
+        language: 'html',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/counter/counter.component.css',
+        content: `/* TODO: Style the counter component */
+`,
+        language: 'css',
         readOnly: false,
         dirty: false,
       },
@@ -222,12 +304,12 @@ Create a **UserCardComponent** that displays user information using Angular's in
 
 ## Example
 \`\`\`
-┌──────────────────────┐
-│ John Doe      Active │
-│ john@example.com     │
-│ Role: Admin          │
-│ [Toggle Status]      │
-└──────────────────────┘
++------------------------+
+| John Doe        Active |
+| john@example.com       |
+| Role: Admin            |
+| [Toggle Status]        |
++------------------------+
 \`\`\`
 `,
     starterFiles: [
@@ -241,12 +323,8 @@ Create a **UserCardComponent** that displays user information using Angular's in
   selector: 'app-root',
   standalone: true,
   imports: [],
-  template: \`
-    <div style="max-width: 600px; margin: 20px auto;">
-      <h1>User Directory</h1>
-      <!-- TODO: Render user cards -->
-    </div>
-  \`,
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.css',
 })
 export class AppComponent {
   users = signal([
@@ -263,6 +341,28 @@ export class AppComponent {
         dirty: false,
       },
       {
+        path: 'src/app/app.component.html',
+        content: `<div class="container">
+  <h1>User Directory</h1>
+  <!-- TODO: Use @for to render a <app-user-card> for each user -->
+</div>
+`,
+        language: 'html',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/app.component.css',
+        content: `.container {
+  max-width: 600px;
+  margin: 20px auto;
+}
+`,
+        language: 'css',
+        readOnly: false,
+        dirty: false,
+      },
+      {
         path: 'src/app/user-card/user-card.component.ts',
         content: `import { Component, input, output } from '@angular/core';
 
@@ -271,16 +371,32 @@ export class AppComponent {
 @Component({
   selector: 'app-user-card',
   standalone: true,
-  template: \`
-    <!-- TODO: Implement user card template -->
-    <p>Implement the user card here!</p>
-  \`,
+  templateUrl: './user-card.component.html',
+  styleUrl: './user-card.component.css',
 })
 export class UserCardComponent {
   // TODO: Add input for user and output for toggle event
 }
 `,
         language: 'typescript',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/user-card/user-card.component.html',
+        content: `<!-- TODO: Implement user card template -->
+<!-- Display name, email, role, active/inactive badge, and toggle button -->
+<p>Implement the user card here!</p>
+`,
+        language: 'html',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/user-card/user-card.component.css',
+        content: `/* TODO: Style the user card */
+`,
+        language: 'css',
         readOnly: false,
         dirty: false,
       },
@@ -306,36 +422,37 @@ export const PROBLEM_TEST_SPECS: Record<string, object[]> = {
       name: 'todo-list.spec',
       content: `
 describe('TodoListComponent', function() {
-  it('should have an addTodo method or similar', function() {
-    // We test the source code content since we can't run Angular TestBed in Node
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
+  it('should use signals for state', function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
     expect(source).toContain('signal');
   });
 
   it('should use @for in the template', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
-    expect(source).toContain('@for');
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/todo-list/todo-list.component.html', 'utf-8');
+    expect(template).toContain('@for');
   });
 
   it('should have an input field in template', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
-    expect(source).toContain('input');
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/todo-list/todo-list.component.html', 'utf-8');
+    expect(template).toContain('input');
   });
 
   it('should have add functionality', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
-    const hasAdd = source.includes('add') || source.includes('push') || source.includes('update');
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
+    var hasAdd = source.includes('add') || source.includes('push') || source.includes('update');
     expect(hasAdd).toBeTruthy();
   });
 
   it('should have remove functionality', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
-    const hasRemove = source.includes('remove') || source.includes('filter') || source.includes('splice');
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
+    var template = fs.readFileSync('src/app/todo-list/todo-list.component.html', 'utf-8');
+    var hasRemove = source.includes('remove') || source.includes('filter') || source.includes('splice')
+                 || template.includes('remove') || template.includes('Remove');
     expect(hasRemove).toBeTruthy();
   });
 });
@@ -348,33 +465,33 @@ describe('TodoListComponent', function() {
       content: `
 describe('CounterService', function() {
   it('should have a count signal', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
     expect(source).toContain('signal');
     expect(source).toContain('count');
   });
 
   it('should have increment method', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
     expect(source).toContain('increment');
   });
 
   it('should have decrement method', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
     expect(source).toContain('decrement');
   });
 
   it('should have reset method', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
     expect(source).toContain('reset');
   });
 
   it('should have doubleCount computed signal', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
     expect(source).toContain('computed');
     expect(source).toContain('doubleCount');
   });
@@ -382,22 +499,22 @@ describe('CounterService', function() {
 
 describe('CounterComponent', function() {
   it('should inject CounterService', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.component.ts', 'utf-8');
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/counter/counter.component.ts', 'utf-8');
     expect(source).toContain('inject');
     expect(source).toContain('CounterService');
   });
 
   it('should display count in template', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.component.ts', 'utf-8');
-    expect(source).toContain('count');
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/counter/counter.component.html', 'utf-8');
+    expect(template).toContain('count');
   });
 
   it('should have increment button', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.component.ts', 'utf-8');
-    const hasButton = source.includes('Increment') || source.includes('increment');
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/counter/counter.component.html', 'utf-8');
+    var hasButton = template.includes('Increment') || template.includes('increment');
     expect(hasButton).toBeTruthy();
   });
 });
@@ -410,49 +527,49 @@ describe('CounterComponent', function() {
       content: `
 describe('UserCardComponent', function() {
   it('should use input signal for user', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
     expect(source).toContain('input');
   });
 
   it('should use output for toggle event', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
     expect(source).toContain('output');
   });
 
   it('should display user name in template', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
-    expect(source).toContain('name');
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/user-card/user-card.component.html', 'utf-8');
+    expect(template).toContain('name');
   });
 
   it('should show active/inactive status', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
-    const hasStatus = source.includes('Active') || source.includes('active') || source.includes('Inactive');
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/user-card/user-card.component.html', 'utf-8');
+    var hasStatus = template.includes('Active') || template.includes('active') || template.includes('Inactive');
     expect(hasStatus).toBeTruthy();
   });
 
   it('should have toggle button', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
-    const hasToggle = source.includes('Toggle') || source.includes('toggle');
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/user-card/user-card.component.html', 'utf-8');
+    var hasToggle = template.includes('Toggle') || template.includes('toggle');
     expect(hasToggle).toBeTruthy();
   });
 });
 
 describe('AppComponent', function() {
   it('should import UserCardComponent', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/app.component.ts', 'utf-8');
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/app.component.ts', 'utf-8');
     expect(source).toContain('UserCardComponent');
   });
 
   it('should use @for to render cards', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/app.component.ts', 'utf-8');
-    expect(source).toContain('@for');
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/app.component.html', 'utf-8');
+    expect(template).toContain('@for');
   });
 });
 `,
