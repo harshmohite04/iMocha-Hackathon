@@ -15,7 +15,8 @@
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
       "Bash(netstat:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(cd D:\\\\harsh\\\\Code_Playground\\\\Hackathon\\\\iMocha:*)"
     ]
   }
 }
