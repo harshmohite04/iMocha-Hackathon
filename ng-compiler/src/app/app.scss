@@ -1,0 +1,18 @@
+.problem-selector {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.submission-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.workspace-layout {
+  background: #1e1e1e;
+  color: #d4d4d4;
+}

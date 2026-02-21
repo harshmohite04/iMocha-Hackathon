@@ -1,0 +1,135 @@
+<!-- Loading Overlay -->
+<app-loading-overlay [stage]="webContainer.stage()" />
+
+<!-- Problem Selector (shown when no problem is loaded) -->
+@if (!assessment.currentProblem() && webContainer.stage() === 'idle') {
+  <div class="problem-selector d-flex align-items-center justify-content-center vh-100">
+    <div class="card shadow-lg" style="max-width: 600px; width: 90%;">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">
+          <i class="bi bi-code-square me-2"></i>
+          Angular Skill Assessment
+        </h4>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">Select a problem to begin your assessment. Your code will compile and run in the browser using a real Angular environment.</p>
+        <div class="list-group">
+          @for (problem of problems; track problem.id) {
+            <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                    (click)="startAssessment(problem.id)"
+                    [disabled]="isLoading()">
+              <div>
+                <h6 class="mb-1">{{ problem.title }}</h6>
+                <small class="text-muted">
+                  {{ Math.floor(problem.timeLimit / 60) }} min |
+                  {{ problem.maxScore }} pts |
+                  {{ problem.starterFiles.length }} files
+                </small>
+              </div>
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          }
+        </div>
+      </div>
+      @if (errorMessage()) {
+        <div class="card-footer">
+          <div class="alert alert-danger mb-0">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            {{ errorMessage() }}
+          </div>
+        </div>
+      }
+      <div class="card-footer bg-light">
+        <small class="text-muted">
+          <i class="bi bi-info-circle me-1"></i>
+          Requires Chrome or Edge. The environment takes 15-30s to boot.
+        </small>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Submission Result -->
+@if (assessment.isSubmitted()) {
+  <div class="submission-overlay">
+    <div class="card shadow-lg text-center" style="max-width: 500px; width: 90%;">
+      <div class="card-body p-4">
+        @if (assessment.finalScore(); as score) {
+          <div class="mb-3">
+            @if (score.passed === score.total && score.total > 0) {
+              <i class="bi bi-trophy-fill text-warning" style="font-size: 4rem;"></i>
+            } @else {
+              <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+            }
+          </div>
+          <h2>Assessment Submitted!</h2>
+          <div class="display-4 fw-bold my-3"
+               [class.text-success]="score.passed === score.total"
+               [class.text-warning]="score.passed > 0 && score.passed < score.total"
+               [class.text-danger]="score.passed === 0 && score.total > 0">
+            {{ score.score }} / {{ assessment.currentProblem()?.maxScore }} pts
+          </div>
+          <p class="text-muted">{{ score.passed }} of {{ score.total }} tests passed</p>
+          <div class="progress mb-3" style="height: 10px;">
+            <div class="progress-bar bg-success" [style.width.%]="score.total > 0 ? (score.passed / score.total) * 100 : 0"></div>
+          </div>
+          <button class="btn btn-primary" (click)="backToProblems()">
+            <i class="bi bi-arrow-left me-1"></i> Back to Problems
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Main Workspace (shown when problem is loaded and not submitted) -->
+@if (assessment.currentProblem() && !assessment.isSubmitted()) {
+  <div class="workspace-layout vh-100 d-flex flex-column" [class.dark-theme]="isDarkTheme()">
+    <!-- Header with tabs, timer, theme -->
+    <app-workspace-header
+      [isDarkTheme]="isDarkTheme()"
+      (themeToggle)="toggleTheme()" />
+
+    <!-- Main content area -->
+    <div class="flex-grow-1 overflow-hidden">
+      <app-split-pane direction="horizontal" [initialSplit]="25">
+        <!-- Left: Problem + File Tree -->
+        <div first-pane class="h-100 d-flex flex-column">
+          <app-split-pane direction="vertical" [initialSplit]="60">
+            <app-problem-panel first-pane />
+            <app-file-tree second-pane />
+          </app-split-pane>
+        </div>
+
+        <!-- Right: Editor + Preview + Tests -->
+        <div second-pane class="h-100">
+          <app-split-pane direction="horizontal" [initialSplit]="55">
+            <!-- Center: Code Editor -->
+            <div first-pane class="h-100">
+              <app-code-editor [theme]="isDarkTheme() ? 'vs-dark' : 'vs'" />
+            </div>
+
+            <!-- Right: Preview + Tests + Console -->
+            <div second-pane class="h-100 d-flex flex-column">
+              <app-split-pane direction="vertical" [initialSplit]="50">
+                <app-preview-panel first-pane />
+                <div second-pane class="d-flex flex-column h-100">
+                  <app-split-pane direction="vertical" [initialSplit]="60">
+                    <app-test-results-panel first-pane />
+                    <app-console-output second-pane />
+                  </app-split-pane>
+                </div>
+              </app-split-pane>
+            </div>
+          </app-split-pane>
+        </div>
+      </app-split-pane>
+    </div>
+
+    <!-- Bottom Toolbar -->
+    <app-toolbar
+      (runTests)="onRunTests()"
+      (resetCode)="onReset()"
+      (submit)="onSubmit()" />
+  </div>
+}
