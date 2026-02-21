@@ -1,16 +1,19 @@
 import { Injectable, signal, computed, effect, inject } from '@angular/core';
 import { CompilationError } from '../models/compilation-error.model';
 import { WebContainerService } from './webcontainer.service';
+import { AppConsoleService } from './app-console.service';
 
 @Injectable({ providedIn: 'root' })
 export class CompilationService {
   private webContainer = inject(WebContainerService);
+  private appConsole = inject(AppConsoleService);
 
   readonly errors = signal<CompilationError[]>([]);
   readonly isCompiling = signal(false);
   readonly hasErrors = computed(() => this.errors().length > 0);
 
   private lastOutput = '';
+  private hasLoggedReady = false;
 
   constructor() {
     // Watch server output for compilation errors
@@ -22,6 +25,28 @@ export class CompilationService {
       this.lastOutput = output;
 
       this.parseOutput(newContent);
+    });
+
+    // Log stage changes to the console
+    effect(() => {
+      const stage = this.webContainer.stage();
+      switch (stage) {
+        case 'installing':
+          this.appConsole.addEntry('info', 'Installing dependencies...');
+          break;
+        case 'starting':
+          this.appConsole.addEntry('info', 'Starting dev server...');
+          break;
+        case 'ready':
+          if (!this.hasLoggedReady) {
+            this.appConsole.addEntry('info', 'Dev server ready. Compiling your Angular app...');
+            this.hasLoggedReady = true;
+          }
+          break;
+        case 'error':
+          this.appConsole.addEntry('error', 'Environment setup failed. Check your code for errors.');
+          break;
+      }
     });
   }
 
@@ -35,6 +60,9 @@ export class CompilationService {
     if (chunk.includes('Compiled successfully') || chunk.includes('Build at:') ||
         chunk.includes('ready in') || chunk.includes('page reload') || chunk.includes('hmr update')) {
       this.isCompiling.set(false);
+      if (this.errors().length > 0) {
+        this.appConsole.addEntry('info', 'Compilation successful. Errors resolved.');
+      }
       this.errors.set([]);
       return;
     }
@@ -74,6 +102,10 @@ export class CompilationService {
 
     if (newErrors.length > 0) {
       this.errors.set(newErrors);
+      // Also log errors to console
+      for (const err of newErrors) {
+        this.appConsole.addEntry('error', `${err.file}:${err.line}:${err.column} - ${err.message}`);
+      }
     }
   }
 

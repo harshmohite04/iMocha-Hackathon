@@ -422,38 +422,75 @@ export const PROBLEM_TEST_SPECS: Record<string, object[]> = {
       name: 'todo-list.spec',
       content: `
 describe('TodoListComponent', function() {
-  it('should use signals for state', function() {
+  it('should use signal for todos state', { difficulty: 'easy', testType: 'positive' }, function() {
     var fs = require('fs');
     var source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
-    expect(source).toContain('signal');
+    expect(source).toMatch(/signal\\s*<\\s*string\\s*\\[\\s*\\]\\s*>/);
   });
 
-  it('should use @for in the template', function() {
+  it('should use @for in template', { difficulty: 'easy', testType: 'positive' }, function() {
     var fs = require('fs');
     var template = fs.readFileSync('src/app/todo-list/todo-list.component.html', 'utf-8');
-    expect(template).toContain('@for');
+    expect(template).toMatch(/@for\\s*\\(/);
   });
 
-  it('should have an input field in template', function() {
+  it('should have input field for new todos', { difficulty: 'easy', testType: 'positive' }, function() {
     var fs = require('fs');
     var template = fs.readFileSync('src/app/todo-list/todo-list.component.html', 'utf-8');
-    expect(template).toContain('input');
+    expect(template).toMatch(/<input[^>]*>/);
   });
 
-  it('should have add functionality', function() {
+  it('should have addTodo method with signal update', { difficulty: 'easy', testType: 'positive' }, function() {
     var fs = require('fs');
     var source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
-    var hasAdd = source.includes('add') || source.includes('push') || source.includes('update');
-    expect(hasAdd).toBeTruthy();
+    expect(source).toMatch(/add[Tt]odo\\s*\\(/);
+    var hasUpdate = source.match(/\\.update\\s*\\(/) || source.match(/\\.set\\s*\\(/);
+    expect(!!hasUpdate).toBeTruthy();
   });
 
-  it('should have remove functionality', function() {
+  it('should have removeTodo method with filter or splice', { difficulty: 'medium', testType: 'positive' }, function() {
     var fs = require('fs');
     var source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
+    expect(source).toMatch(/remove[Tt]odo\\s*\\(/);
+    var hasFilterOrSplice = source.match(/\\.filter\\s*\\(/) || source.match(/\\.splice\\s*\\(/);
+    expect(!!hasFilterOrSplice).toBeTruthy();
+  });
+
+  it('should have Add button with click handler', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
     var template = fs.readFileSync('src/app/todo-list/todo-list.component.html', 'utf-8');
-    var hasRemove = source.includes('remove') || source.includes('filter') || source.includes('splice')
-                 || template.includes('remove') || template.includes('Remove');
-    expect(hasRemove).toBeTruthy();
+    expect(template).toMatch(/<button[^>]*\\(click\\)[^>]*>[^<]*[Aa]dd[^<]*<\\/button>/);
+  });
+
+  it('should have Remove button inside @for loop', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/todo-list/todo-list.component.html', 'utf-8');
+    var forIdx = template.indexOf('@for');
+    var removeIdx = template.toLowerCase().indexOf('remove', forIdx);
+    expect(forIdx).not.toBe(-1);
+    expect(removeIdx).toBeGreaterThan(forIdx);
+  });
+
+  it('should prevent empty todos', { difficulty: 'medium', testType: 'negative' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
+    var hasTrimCheck = source.match(/\\.trim\\s*\\(\\)/) && (source.match(/===\\s*['"]\\s*['"]/) || source.match(/\\.length/) || source.match(/!\\s*\\w+/));
+    var hasGuard = source.match(/if\\s*\\(/) || source.match(/return\\s*;/);
+    expect(!!(hasTrimCheck || hasGuard)).toBeTruthy();
+  });
+
+  it('should clear input after adding todo', { difficulty: 'medium', testType: 'edge' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
+    var hasClear = source.match(/=\\s*['"]\\s*['"]/) || source.match(/\\.set\\s*\\(\\s*['"]\\s*['"]\\s*\\)/) || source.match(/\\.nativeElement\\.value\\s*=\\s*['"]['"]/);
+
+    expect(!!hasClear).toBeTruthy();
+  });
+
+  it('should use track in @for', { difficulty: 'hard', testType: 'edge' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/todo-list/todo-list.component.html', 'utf-8');
+    expect(template).toMatch(/@for\\s*\\([^{]*track/);
   });
 });
 `,
@@ -464,58 +501,80 @@ describe('TodoListComponent', function() {
       name: 'counter.spec',
       content: `
 describe('CounterService', function() {
-  it('should have a count signal', function() {
+  it('should have a count signal initialized to 0', { difficulty: 'easy', testType: 'positive' }, function() {
     var fs = require('fs');
     var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
-    expect(source).toContain('signal');
-    expect(source).toContain('count');
+    expect(source).toMatch(/count\\s*=\\s*signal\\s*[<(]/);
+    expect(source).toMatch(/signal\\s*(<\\s*number\\s*>)?\\s*\\(\\s*0\\s*\\)/);
   });
 
-  it('should have increment method', function() {
+  it('should have increment method that increases count', { difficulty: 'easy', testType: 'positive' }, function() {
     var fs = require('fs');
     var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
-    expect(source).toContain('increment');
+    expect(source).toMatch(/increment\\s*\\(\\s*\\)/);
+    var hasLogic = source.match(/\\.update\\s*\\(/) || source.match(/\\.set\\s*\\(/);
+    expect(!!hasLogic).toBeTruthy();
   });
 
-  it('should have decrement method', function() {
+  it('should have decrement method that decreases count', { difficulty: 'easy', testType: 'positive' }, function() {
     var fs = require('fs');
     var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
-    expect(source).toContain('decrement');
+    expect(source).toMatch(/decrement\\s*\\(\\s*\\)/);
+    var hasLogic = source.match(/\\.update\\s*\\(/) || source.match(/\\.set\\s*\\(/);
+    expect(!!hasLogic).toBeTruthy();
   });
 
-  it('should have reset method', function() {
+  it('should have reset method that sets count to 0', { difficulty: 'easy', testType: 'positive' }, function() {
     var fs = require('fs');
     var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
-    expect(source).toContain('reset');
+    expect(source).toMatch(/reset\\s*\\(\\s*\\)/);
+    expect(source).toMatch(/\\.set\\s*\\(\\s*0\\s*\\)/);
   });
 
-  it('should have doubleCount computed signal', function() {
+  it('should have doubleCount as computed signal', { difficulty: 'medium', testType: 'positive' }, function() {
     var fs = require('fs');
     var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
-    expect(source).toContain('computed');
-    expect(source).toContain('doubleCount');
+    expect(source).toMatch(/doubleCount\\s*=\\s*computed\\s*\\(/);
+    expect(source).toMatch(/\\*\\s*2/);
+  });
+
+  it('should use Injectable with providedIn root', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
+    expect(source).toMatch(/@Injectable\\s*\\(\\s*\\{[^}]*providedIn\\s*:\\s*['"]root['"]/);
   });
 });
 
 describe('CounterComponent', function() {
-  it('should inject CounterService', function() {
+  it('should inject CounterService via inject()', { difficulty: 'medium', testType: 'positive' }, function() {
     var fs = require('fs');
     var source = fs.readFileSync('src/app/counter/counter.component.ts', 'utf-8');
-    expect(source).toContain('inject');
-    expect(source).toContain('CounterService');
+    expect(source).toMatch(/inject\\s*\\(\\s*CounterService\\s*\\)/);
   });
 
-  it('should display count in template', function() {
+  it('should display count and doubleCount in template', { difficulty: 'medium', testType: 'positive' }, function() {
     var fs = require('fs');
     var template = fs.readFileSync('src/app/counter/counter.component.html', 'utf-8');
-    expect(template).toContain('count');
+    expect(template).toMatch(/count/i);
+    expect(template).toMatch(/double/i);
   });
 
-  it('should have increment button', function() {
+  it('should have Increment, Decrement, and Reset buttons', { difficulty: 'medium', testType: 'edge' }, function() {
     var fs = require('fs');
     var template = fs.readFileSync('src/app/counter/counter.component.html', 'utf-8');
-    var hasButton = template.includes('Increment') || template.includes('increment');
-    expect(hasButton).toBeTruthy();
+    var lower = template.toLowerCase();
+    expect(lower).toContain('increment');
+    expect(lower).toContain('decrement');
+    expect(lower).toContain('reset');
+  });
+
+  it('should bind click handlers to service methods', { difficulty: 'hard', testType: 'edge' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/counter/counter.component.html', 'utf-8');
+    var hasIncrClick = template.match(/\\(click\\)\\s*=\\s*["'][^"']*increment/);
+    var hasDecrClick = template.match(/\\(click\\)\\s*=\\s*["'][^"']*decrement/);
+    var hasResetClick = template.match(/\\(click\\)\\s*=\\s*["'][^"']*reset/);
+    expect(!!(hasIncrClick && hasDecrClick && hasResetClick)).toBeTruthy();
   });
 });
 `,
@@ -526,50 +585,72 @@ describe('CounterComponent', function() {
       name: 'user-card.spec',
       content: `
 describe('UserCardComponent', function() {
-  it('should use input signal for user', function() {
+  it('should use input() signal for user data', { difficulty: 'easy', testType: 'positive' }, function() {
     var fs = require('fs');
     var source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
-    expect(source).toContain('input');
+    expect(source).toMatch(/=\\s*input\\s*[<(]/);
   });
 
-  it('should use output for toggle event', function() {
+  it('should use output() for toggle event', { difficulty: 'easy', testType: 'positive' }, function() {
     var fs = require('fs');
     var source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
-    expect(source).toContain('output');
+    expect(source).toMatch(/=\\s*output\\s*[<(]/);
   });
 
-  it('should display user name in template', function() {
+  it('should define a User interface or type', { difficulty: 'easy', testType: 'positive' }, function() {
     var fs = require('fs');
-    var template = fs.readFileSync('src/app/user-card/user-card.component.html', 'utf-8');
-    expect(template).toContain('name');
+    var source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
+    var appSource = fs.readFileSync('src/app/app.component.ts', 'utf-8');
+    var hasInterface = source.match(/interface\\s+User/) || appSource.match(/interface\\s+User/) || source.match(/type\\s+User\\s*=/);
+    expect(!!hasInterface).toBeTruthy();
   });
 
-  it('should show active/inactive status', function() {
+  it('should display user name in template', { difficulty: 'easy', testType: 'positive' }, function() {
     var fs = require('fs');
     var template = fs.readFileSync('src/app/user-card/user-card.component.html', 'utf-8');
-    var hasStatus = template.includes('Active') || template.includes('active') || template.includes('Inactive');
-    expect(hasStatus).toBeTruthy();
+    expect(template).toMatch(/\\{\\{[^}]*name[^}]*\\}\\}/);
   });
 
-  it('should have toggle button', function() {
+  it('should display user email in template', { difficulty: 'medium', testType: 'positive' }, function() {
     var fs = require('fs');
     var template = fs.readFileSync('src/app/user-card/user-card.component.html', 'utf-8');
-    var hasToggle = template.includes('Toggle') || template.includes('toggle');
-    expect(hasToggle).toBeTruthy();
+    expect(template).toMatch(/\\{\\{[^}]*email[^}]*\\}\\}/);
+  });
+
+  it('should display user role in template', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/user-card/user-card.component.html', 'utf-8');
+    expect(template).toMatch(/\\{\\{[^}]*role[^}]*\\}\\}/);
+  });
+
+  it('should show Active or Inactive badge conditionally', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/user-card/user-card.component.html', 'utf-8');
+    var hasConditional = template.match(/@if\\s*\\([^)]*active/) || template.match(/\\[class/) || template.match(/\\*ngIf/) || template.match(/\\?\\s*['"]Active['"]\\s*:\\s*['"]Inactive['"]/);
+    expect(!!hasConditional).toBeTruthy();
+  });
+
+  it('should have Toggle Status button with click handler', { difficulty: 'medium', testType: 'edge' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/user-card/user-card.component.html', 'utf-8');
+    expect(template).toMatch(/<button[^>]*\\(click\\)/);
+    var lower = template.toLowerCase();
+    expect(lower).toContain('toggle');
   });
 });
 
 describe('AppComponent', function() {
-  it('should import UserCardComponent', function() {
+  it('should import UserCardComponent in imports array', { difficulty: 'medium', testType: 'positive' }, function() {
     var fs = require('fs');
     var source = fs.readFileSync('src/app/app.component.ts', 'utf-8');
-    expect(source).toContain('UserCardComponent');
+    expect(source).toMatch(/imports\\s*:\\s*\\[[^\\]]*UserCardComponent/);
   });
 
-  it('should use @for to render cards', function() {
+  it('should use @for to render user cards with track', { difficulty: 'hard', testType: 'edge' }, function() {
     var fs = require('fs');
     var template = fs.readFileSync('src/app/app.component.html', 'utf-8');
-    expect(template).toContain('@for');
+    expect(template).toMatch(/@for\\s*\\([^{]*track/);
+    expect(template).toMatch(/<app-user-card/);
   });
 });
 `,

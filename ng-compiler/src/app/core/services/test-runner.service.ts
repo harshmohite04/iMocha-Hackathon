@@ -1,6 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { WebContainerService } from './webcontainer.service';
-import { TestSuite, TestResult } from '../models/problem.model';
+import { TestSuite, TestResult, TestDifficulty, TestType } from '../models/problem.model';
 
 @Injectable({ providedIn: 'root' })
 export class TestRunnerService {
@@ -39,12 +39,24 @@ export class TestRunnerService {
       const jsonStr = output.substring(startIdx + startMarker.length, endIdx).trim();
       const raw = JSON.parse(jsonStr);
 
+      const validDifficulties: TestDifficulty[] = ['easy', 'medium', 'hard'];
+      const validTypes: TestType[] = ['positive', 'negative', 'edge'];
+
+      const results: TestResult[] = (raw.results || []).map((r: any) => ({
+        name: r.name,
+        status: r.status,
+        duration: r.duration,
+        errorMessage: r.errorMessage,
+        difficulty: validDifficulties.includes(r.difficulty) ? r.difficulty : 'medium',
+        testType: validTypes.includes(r.testType) ? r.testType : 'positive',
+      }));
+
       const suite: TestSuite = {
         total: raw.total,
         passed: raw.passed,
         failed: raw.failed,
         score: raw.total > 0 ? Math.round((raw.passed / raw.total) * maxScore) : 0,
-        results: raw.results as TestResult[],
+        results,
       };
 
       this.testSuite.set(suite);

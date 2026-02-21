@@ -1,5 +1,108 @@
 import { FileSystemTree } from '@webcontainer/api';
 
+// Vite config with Angular inline plugin.
+// Uses String.raw to avoid escaping issues with regex patterns and backticks.
+// The ${''} breaks are used to prevent the TS compiler from interpreting
+// backticks and ${} inside String.raw as template literal syntax.
+const VITE_CONFIG_CONTENT: string = (() => {
+  const imports = [
+    'import { defineConfig } from "vite";',
+    'import fs from "fs";',
+    'import path from "path";',
+  ].join('\n');
+
+  // The replace chain for escaping content before wrapping in backticks
+  const escChain = String.raw`.replace(/\\/g, '\\\\').replace(/` + '`' + String.raw`/g, '\\` + '`' + String.raw`').replace(/\$/g, '\\$')`;
+
+  const plugin = [
+    'function angularInlinePlugin() {',
+    '  return {',
+    '    name: "angular-inline",',
+    '    enforce: "pre",',
+    '    transform(code, id) {',
+    '      if (!id.endsWith(".ts") || id.includes("node_modules")) return null;',
+    '      if (code.indexOf("templateUrl") === -1 && code.indexOf("styleUrl") === -1) return null;',
+    '      var result = code;',
+    '      var dir = path.dirname(id);',
+    '',
+    String.raw`      var tmplMatch = result.match(/templateUrl\s*:\s*['"]\.\/([^'"]+)['"]/);`,
+    '      if (tmplMatch) {',
+    '        try {',
+    '          var html = fs.readFileSync(path.join(dir, tmplMatch[1]), "utf-8");',
+    '          var escaped = html' + escChain + ';',
+    '          result = result.replace(tmplMatch[0], "template: `" + escaped + "`");',
+    '        } catch(e) {}',
+    '      }',
+    '',
+    String.raw`      var styleMatch = result.match(/styleUrl\s*:\s*['"]\.\/([^'"]+)['"]/);`,
+    '      if (styleMatch) {',
+    '        try {',
+    '          var css = fs.readFileSync(path.join(dir, styleMatch[1]), "utf-8");',
+    '          var esc2 = css' + escChain + ';',
+    '          result = result.replace(styleMatch[0], "styles: [`" + esc2 + "`]");',
+    '        } catch(e) {}',
+    '      }',
+    '',
+    String.raw`      var suMatch = result.match(/styleUrls\s*:\s*\[\s*['"]\.\/([^'"]+)['"]\s*\]/);`,
+    '      if (suMatch) {',
+    '        try {',
+    '          var css2 = fs.readFileSync(path.join(dir, suMatch[1]), "utf-8");',
+    '          var esc3 = css2' + escChain + ';',
+    '          result = result.replace(suMatch[0], "styles: [`" + esc3 + "`]");',
+    '        } catch(e) {}',
+    '      }',
+    '',
+    '      if (result !== code) return { code: result, map: null };',
+    '      return null;',
+    '    }',
+    '  };',
+    '}',
+  ].join('\n');
+
+  const config = [
+    'export default defineConfig({',
+    '  root: "src",',
+    '  build: { outDir: "../dist" },',
+    '  plugins: [angularInlinePlugin()],',
+    '  esbuild: {',
+    '    target: "es2022",',
+    '    tsconfigRaw: {',
+    '      compilerOptions: {',
+    '        experimentalDecorators: true,',
+    '        useDefineForClassFields: false,',
+    '      }',
+    '    }',
+    '  },',
+    '  optimizeDeps: {',
+    '    include: [',
+    '      "@angular/core",',
+    '      "@angular/common",',
+    '      "@angular/compiler",',
+    '      "@angular/platform-browser",',
+    '      "@angular/platform-browser-dynamic",',
+    '      "@angular/forms",',
+    '      "rxjs",',
+    '      "zone.js",',
+    '    ],',
+    '    esbuildOptions: {',
+    '      tsconfigRaw: {',
+    '        compilerOptions: {',
+    '          experimentalDecorators: true,',
+    '          useDefineForClassFields: false,',
+    '        }',
+    '      }',
+    '    }',
+    '  },',
+    '  server: {',
+    '    hmr: true,',
+    '    watch: { usePolling: true, interval: 500 },',
+    '  },',
+    '});',
+  ].join('\n');
+
+  return imports + '\n\n' + plugin + '\n\n' + config;
+})();
+
 export const DEFAULT_ANGULAR_PROJECT: FileSystemTree = {
   'package.json': {
     file: {
@@ -30,46 +133,7 @@ export const DEFAULT_ANGULAR_PROJECT: FileSystemTree = {
   },
   'vite.config.js': {
     file: {
-      contents: `import { defineConfig } from 'vite';
-
-export default defineConfig({
-  root: 'src',
-  build: { outDir: '../dist' },
-  esbuild: {
-    target: 'es2022',
-    tsconfigRaw: {
-      compilerOptions: {
-        experimentalDecorators: true,
-        useDefineForClassFields: false,
-      }
-    }
-  },
-  optimizeDeps: {
-    include: [
-      '@angular/core',
-      '@angular/common',
-      '@angular/compiler',
-      '@angular/platform-browser',
-      '@angular/platform-browser-dynamic',
-      '@angular/forms',
-      'rxjs',
-      'zone.js',
-    ],
-    esbuildOptions: {
-      tsconfigRaw: {
-        compilerOptions: {
-          experimentalDecorators: true,
-          useDefineForClassFields: false,
-        }
-      }
-    }
-  },
-  server: {
-    hmr: true,
-    watch: { usePolling: true, interval: 500 },
-  },
-});
-`,
+      contents: VITE_CONFIG_CONTENT,
     },
   },
   'tsconfig.json': {
@@ -97,7 +161,9 @@ import '@angular/compiler';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { AppComponent } from './app/app.component';
 
-bootstrapApplication(AppComponent).catch(err => console.error(err));
+bootstrapApplication(AppComponent)
+  .then(() => console.info('Angular application initialized successfully'))
+  .catch(err => console.error('Bootstrap failed:', err));
 `,
         },
       },
@@ -117,67 +183,59 @@ bootstrapApplication(AppComponent).catch(err => console.error(err));
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/styles.css">
   <script>
-    // Intercept console methods and forward to parent window
     (function() {
+      var viteKeywords = ['[vite]','[hmr]','connecting','connected','hot updated','page reload','hmr update'];
+
+      function isViteMessage(firstArg) {
+        if (typeof firstArg !== 'string') return false;
+        var l = firstArg.toLowerCase();
+        for (var i = 0; i < viteKeywords.length; i++) {
+          if (l.indexOf(viteKeywords[i]) !== -1) return true;
+        }
+        if (firstArg.indexOf('%c') === 0 && l.indexOf('vite') !== -1) return true;
+        return false;
+      }
+
+      function send(method, args) {
+        try {
+          window.parent.postMessage({
+            type: '__CONSOLE__',
+            method: method,
+            args: args,
+            timestamp: Date.now()
+          }, '*');
+        } catch(e) {}
+      }
+
       var methods = ['log', 'warn', 'error', 'info', 'debug'];
       methods.forEach(function(method) {
         var original = console[method];
         console[method] = function() {
-          // Skip Vite/HMR internal messages
-          var firstArg = arguments[0];
-          var skip = false;
-          if (typeof firstArg === 'string') {
-            var l = firstArg.toLowerCase();
-            if (l.indexOf('[vite]') !== -1 || l.indexOf('[hmr]') !== -1 || l.indexOf('vite') === 0
-                || l.indexOf('connecting') !== -1 || l.indexOf('connected') !== -1
-                || l.indexOf('hot updated') !== -1 || l.indexOf('page reload') !== -1) {
-              skip = true;
-            }
+          if (!isViteMessage(arguments[0])) {
+            var args = Array.from(arguments).map(function(a) {
+              try {
+                if (a instanceof Error) return a.stack || a.message || String(a);
+                if (typeof a === 'object') return JSON.stringify(a, null, 2);
+                return String(a);
+              } catch(e) { return String(a); }
+            });
+            send(method, args);
           }
-          if (firstArg && typeof firstArg === 'string' && firstArg.indexOf('%c') === 0 && arguments.length > 1) {
-            var second = String(arguments[1]);
-            if (second.indexOf('color:') !== -1 && (String(arguments[0]).indexOf('vite') !== -1 || String(arguments[0]).indexOf('Vite') !== -1)) {
-              skip = true;
-            }
-          }
-          var args = Array.from(arguments).map(function(a) {
-            try { return typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a); }
-            catch(e) { return String(a); }
-          });
-          try {
-            if (!skip) window.parent.postMessage({
-              type: '__CONSOLE__',
-              method: method,
-              args: args,
-              timestamp: Date.now()
-            }, '*');
-            }
-          } catch(e) {}
           original.apply(console, arguments);
         };
       });
-      // Catch uncaught errors
+
       window.addEventListener('error', function(e) {
-        try {
-          window.parent.postMessage({
-            type: '__CONSOLE__',
-            method: 'error',
-            args: ['Uncaught ' + (e.error ? e.error.stack || e.error.message : e.message)],
-            timestamp: Date.now()
-          }, '*');
-        } catch(ex) {}
+        var msg = e.error ? (e.error.stack || e.error.message) : e.message;
+        send('error', ['Uncaught Error: ' + msg]);
       });
-      // Catch unhandled promise rejections
+
       window.addEventListener('unhandledrejection', function(e) {
-        try {
-          window.parent.postMessage({
-            type: '__CONSOLE__',
-            method: 'error',
-            args: ['Unhandled Promise Rejection: ' + (e.reason ? e.reason.stack || e.reason.message || String(e.reason) : 'unknown')],
-            timestamp: Date.now()
-          }, '*');
-        } catch(ex) {}
+        var reason = e.reason ? (e.reason.stack || e.reason.message || String(e.reason)) : 'unknown';
+        send('error', ['Unhandled Promise Rejection: ' + reason]);
       });
+
+      send('info', ['Loading Angular application...']);
     })();
   </script>
 </head>
@@ -225,27 +283,74 @@ globalThis.describe = function(name, fn) {
   currentSuite = null;
 };
 
-globalThis.it = function(name, fn) {
-  if (currentSuite) currentSuite.specs.push({ name, fn });
+globalThis.it = function(name, optionsOrFn, maybeFn) {
+  var fn, options = {};
+  if (typeof optionsOrFn === 'function') {
+    fn = optionsOrFn;
+  } else {
+    options = optionsOrFn || {};
+    fn = maybeFn;
+  }
+  if (currentSuite) currentSuite.specs.push({ name, fn, difficulty: options.difficulty || 'medium', testType: options.testType || 'positive' });
 };
 
-globalThis.expect = function(actual) {
-  return {
-    toBe(expected) { if (actual !== expected) throw new Error('Expected ' + JSON.stringify(actual) + ' to be ' + JSON.stringify(expected)); },
-    toEqual(expected) { if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error('Expected ' + JSON.stringify(actual) + ' to equal ' + JSON.stringify(expected)); },
-    toBeTruthy() { if (!actual) throw new Error('Expected ' + JSON.stringify(actual) + ' to be truthy'); },
-    toBeFalsy() { if (actual) throw new Error('Expected ' + JSON.stringify(actual) + ' to be falsy'); },
-    toContain(expected) {
-      if (typeof actual === 'string') { if (!actual.includes(expected)) throw new Error('Expected string to contain "' + expected + '"'); }
-      else if (Array.isArray(actual)) { if (!actual.includes(expected)) throw new Error('Expected array to contain ' + JSON.stringify(expected)); }
+function makeExpect(actual, negated) {
+  var matchers = {
+    toBe: function(expected) {
+      var pass = actual === expected;
+      if (negated ? pass : !pass) throw new Error('Expected ' + JSON.stringify(actual) + (negated ? ' not ' : ' ') + 'to be ' + JSON.stringify(expected));
     },
-    toBeGreaterThan(expected) { if (actual <= expected) throw new Error('Expected ' + actual + ' > ' + expected); },
-    toBeLessThan(expected) { if (actual >= expected) throw new Error('Expected ' + actual + ' < ' + expected); },
-    toBeDefined() { if (actual === undefined) throw new Error('Expected value to be defined'); },
-    toBeUndefined() { if (actual !== undefined) throw new Error('Expected undefined but got ' + JSON.stringify(actual)); },
-    toBeNull() { if (actual !== null) throw new Error('Expected null but got ' + JSON.stringify(actual)); },
+    toEqual: function(expected) {
+      var pass = JSON.stringify(actual) === JSON.stringify(expected);
+      if (negated ? pass : !pass) throw new Error('Expected ' + JSON.stringify(actual) + (negated ? ' not ' : ' ') + 'to equal ' + JSON.stringify(expected));
+    },
+    toBeTruthy: function() {
+      var pass = !!actual;
+      if (negated ? pass : !pass) throw new Error('Expected ' + JSON.stringify(actual) + (negated ? ' not ' : ' ') + 'to be truthy');
+    },
+    toBeFalsy: function() {
+      var pass = !actual;
+      if (negated ? pass : !pass) throw new Error('Expected ' + JSON.stringify(actual) + (negated ? ' not ' : ' ') + 'to be falsy');
+    },
+    toContain: function(expected) {
+      var pass = false;
+      if (typeof actual === 'string') pass = actual.includes(expected);
+      else if (Array.isArray(actual)) pass = actual.includes(expected);
+      if (negated ? pass : !pass) throw new Error('Expected ' + (negated ? 'not ' : '') + 'to contain ' + JSON.stringify(expected));
+    },
+    toMatch: function(pattern) {
+      var regex = (pattern instanceof RegExp) ? pattern : new RegExp(pattern);
+      var pass = regex.test(actual);
+      if (negated ? pass : !pass) throw new Error('Expected ' + JSON.stringify(actual) + (negated ? ' not ' : ' ') + 'to match ' + pattern);
+    },
+    toBeGreaterThan: function(expected) {
+      var pass = actual > expected;
+      if (negated ? pass : !pass) throw new Error('Expected ' + actual + (negated ? ' not ' : ' ') + '> ' + expected);
+    },
+    toBeLessThan: function(expected) {
+      var pass = actual < expected;
+      if (negated ? pass : !pass) throw new Error('Expected ' + actual + (negated ? ' not ' : ' ') + '< ' + expected);
+    },
+    toBeDefined: function() {
+      var pass = actual !== undefined;
+      if (negated ? pass : !pass) throw new Error('Expected value ' + (negated ? 'not ' : '') + 'to be defined');
+    },
+    toBeUndefined: function() {
+      var pass = actual === undefined;
+      if (negated ? pass : !pass) throw new Error('Expected ' + (negated ? 'not ' : '') + 'undefined but got ' + JSON.stringify(actual));
+    },
+    toBeNull: function() {
+      var pass = actual === null;
+      if (negated ? pass : !pass) throw new Error('Expected ' + (negated ? 'not ' : '') + 'null but got ' + JSON.stringify(actual));
+    },
   };
-};
+  if (!negated) {
+    matchers.not = makeExpect(actual, true);
+  }
+  return matchers;
+}
+
+globalThis.expect = function(actual) { return makeExpect(actual, false); };
 
 globalThis.beforeEach = function(fn) { if (currentSuite) currentSuite.beforeEach = fn; };
 
@@ -272,9 +377,9 @@ async function runTests() {
       try {
         if (suite.beforeEach) suite.beforeEach();
         spec.fn();
-        testResults.push({ name: suite.name + ' > ' + spec.name, status: 'passed', duration: Date.now() - start });
+        testResults.push({ name: suite.name + ' > ' + spec.name, status: 'passed', duration: Date.now() - start, difficulty: spec.difficulty, testType: spec.testType });
       } catch (e) {
-        testResults.push({ name: suite.name + ' > ' + spec.name, status: 'failed', duration: Date.now() - start, errorMessage: e.message });
+        testResults.push({ name: suite.name + ' > ' + spec.name, status: 'failed', duration: Date.now() - start, errorMessage: e.message, difficulty: spec.difficulty, testType: spec.testType });
       }
     }
   }

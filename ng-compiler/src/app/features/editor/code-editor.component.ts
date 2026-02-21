@@ -92,6 +92,18 @@ export class CodeEditorComponent implements AfterViewInit, OnDestroy {
     const win = window as any;
     const monacoApi = win.monaco;
 
+    // Disable TypeScript/JavaScript diagnostics — real errors come from WebContainer's compiler
+    monacoApi.languages.typescript?.typescriptDefaults?.setDiagnosticsOptions({
+      noSemanticValidation: true,
+      noSyntaxValidation: false, // keep basic syntax checking
+      noSuggestionDiagnostics: true,
+    });
+    monacoApi.languages.typescript?.javascriptDefaults?.setDiagnosticsOptions({
+      noSemanticValidation: true,
+      noSyntaxValidation: false,
+      noSuggestionDiagnostics: true,
+    });
+
     this.editor = monacoApi.editor.create(this.editorContainer().nativeElement, {
       theme: this.theme(),
       fontSize: 14,

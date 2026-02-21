@@ -88,8 +88,14 @@ export class FileSystemService {
   private async writeToContainer(path: string, content: string): Promise<void> {
     if (!this.webContainer) return;
     try {
-      // Write the file itself
-      await this.webContainer.writeFile(path, content);
+      if (path.endsWith('.component.ts')) {
+        // Inline templateUrl/styleUrl before writing so Vite can compile
+        const inlined = this.inlineTemplateAndStyles(path, content);
+        await this.webContainer.writeFile(path, inlined);
+        // Also write raw HTML/CSS for test specs that read them separately
+      } else {
+        await this.webContainer.writeFile(path, content);
+      }
 
       // If this is a .component.html or .component.css, also rewrite the companion .ts
       if (path.endsWith('.component.html') || path.endsWith('.component.css')) {
@@ -98,14 +104,6 @@ export class FileSystemService {
         if (tsFile) {
           const inlined = this.inlineTemplateAndStyles(tsFile.path, tsFile.content);
           await this.webContainer.writeFile(tsPath, inlined);
-        }
-      }
-
-      // If this is a .component.ts with templateUrl/styleUrl, inline them
-      if (path.endsWith('.component.ts')) {
-        const inlined = this.inlineTemplateAndStyles(path, content);
-        if (inlined !== content) {
-          await this.webContainer.writeFile(path, inlined);
         }
       }
 

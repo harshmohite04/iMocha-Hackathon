@@ -14,7 +14,8 @@
       "Bash(npx kill-port:*)",
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
-      "Bash(netstat:*)"
+      "Bash(netstat:*)",
+      "Bash(node:*)"
     ]
   }
 }

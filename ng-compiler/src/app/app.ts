@@ -6,7 +6,6 @@ import { LoadingOverlayComponent } from './shared/components/loading-overlay.com
 import { CodeEditorComponent } from './features/editor/code-editor.component';
 import { FileTreeComponent } from './features/file-explorer/file-tree.component';
 import { PreviewPanelComponent } from './features/preview/preview-panel.component';
-import { ConsoleOutputComponent } from './features/preview/console-output.component';
 import { TestResultsPanelComponent } from './features/test-results/test-results-panel.component';
 import { ProblemPanelComponent } from './features/problem/problem-panel.component';
 import { WorkspaceHeaderComponent } from './features/workspace/workspace-header.component';
@@ -23,7 +22,6 @@ import { PROBLEMS } from './core/constants/problems';
     CodeEditorComponent,
     FileTreeComponent,
     PreviewPanelComponent,
-    ConsoleOutputComponent,
     TestResultsPanelComponent,
     ProblemPanelComponent,
     WorkspaceHeaderComponent,
@@ -48,7 +46,7 @@ export class App {
 
   // Layout state
   sidebarTab = signal<'problem' | 'files'>('problem');
-  bottomTab = signal<'terminal' | 'console' | 'preview' | 'tests' | 'errors'>('terminal');
+  bottomTab = signal<'console' | 'preview' | 'tests' | 'errors'>('console');
   sidebarWidth = signal(300);
   bottomPanelHeight = signal(250);
 

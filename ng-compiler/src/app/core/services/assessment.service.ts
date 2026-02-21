@@ -7,6 +7,7 @@ import { WebContainerService, BootStage } from './webcontainer.service';
 import { FileSystemService } from '../../features/editor/editor.service';
 import { TestRunnerService } from './test-runner.service';
 import { TimerService } from './timer.service';
+import { LlmEvaluatorService } from './llm-evaluator.service';
 import { FileSystemTree } from '@webcontainer/api';
 
 @Injectable({ providedIn: 'root' })
@@ -15,9 +16,11 @@ export class AssessmentService {
   private fileSystem = inject(FileSystemService);
   private testRunner = inject(TestRunnerService);
   private timer = inject(TimerService);
+  private llmEvaluator = inject(LlmEvaluatorService);
 
   readonly currentProblem = signal<Problem | null>(null);
   readonly isSubmitted = signal(false);
+  readonly isEvaluatingLlm = signal(false);
   readonly finalScore = signal<TestSuite | null>(null);
   readonly problems = signal<Problem[]>(PROBLEMS);
 
@@ -65,7 +68,7 @@ export class AssessmentService {
 
   private buildFileSystemTree(problem: Problem): FileSystemTree {
     // Start with the default Angular project
-    const tree: FileSystemTree = { ...DEFAULT_ANGULAR_PROJECT };
+    const tree: FileSystemTree = JSON.parse(JSON.stringify(DEFAULT_ANGULAR_PROJECT));
 
     // Mount all starter files (including HTML/CSS for test specs to read)
     for (const file of problem.starterFiles) {
@@ -139,13 +142,8 @@ export class AssessmentService {
     const problem = this.currentProblem();
     if (!problem) throw new Error('No problem loaded');
 
-    // Flush pending file writes
+    // Flush pending file writes (handles inlining templateUrl/styleUrl)
     await this.fileSystem.flushAll();
-
-    // Write current file contents to container (in case of edits)
-    for (const file of this.fileSystem.files()) {
-      await this.webContainer.writeFile(file.path, file.content);
-    }
 
     return this.testRunner.runTests(problem.maxScore);
   }
@@ -155,6 +153,42 @@ export class AssessmentService {
     const suite = await this.runTests();
     this.isSubmitted.set(true);
     this.finalScore.set(suite);
+
+    // Run LLM evaluation if API key is set
+    if (this.llmEvaluator.hasApiKey) {
+      const problem = this.currentProblem();
+      if (problem) {
+        this.isEvaluatingLlm.set(true);
+        try {
+          const codeFiles = this.fileSystem.files().map(f => ({
+            path: f.path,
+            content: f.content,
+          }));
+
+          const evaluation = await this.llmEvaluator.evaluate(
+            problem.description,
+            codeFiles,
+            suite,
+            problem.maxScore
+          );
+
+          if (evaluation) {
+            const updatedSuite: TestSuite = {
+              ...suite,
+              llmEvaluation: evaluation,
+              finalScore: evaluation.adjustedScore,
+            };
+            this.finalScore.set(updatedSuite);
+            return updatedSuite;
+          }
+        } catch (err) {
+          console.error('LLM evaluation failed, using base score:', err);
+        } finally {
+          this.isEvaluatingLlm.set(false);
+        }
+      }
+    }
+
     return suite;
   }
 

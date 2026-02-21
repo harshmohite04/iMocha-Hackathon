@@ -33,6 +33,16 @@ export class AppConsoleService implements OnDestroy {
     window.addEventListener('message', this.listener);
   }
 
+  /** Add a log entry programmatically (e.g., from build/compilation events) */
+  addEntry(method: ConsoleEntry['method'], ...args: string[]): void {
+    const entry: ConsoleEntry = { method, args, timestamp: Date.now() };
+    this.logs.update((prev) => [...prev, entry]);
+    this.count.update((c) => c + 1);
+    if (method === 'error') {
+      this.errorCount.update((c) => c + 1);
+    }
+  }
+
   clear(): void {
     this.logs.set([]);
     this.count.set(0);
