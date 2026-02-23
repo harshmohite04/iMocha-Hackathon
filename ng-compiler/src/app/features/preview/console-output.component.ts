@@ -1,4 +1,4 @@
-import { Component, inject, viewChild, ElementRef, effect } from '@angular/core';
+import { Component, inject, viewChild, ElementRef, effect, computed } from '@angular/core';
 import { WebContainerService } from '../../core/services/webcontainer.service';
 
 @Component({
@@ -9,14 +9,22 @@ import { WebContainerService } from '../../core/services/webcontainer.service';
       <div class="console-header d-flex align-items-center justify-content-between px-2 py-1">
         <div class="d-flex align-items-center">
           <i class="bi bi-terminal me-1"></i>
-          <small class="fw-bold text-uppercase">Console</small>
+          <small class="fw-bold text-uppercase">Terminal</small>
+          @if (lineCount() > 0) {
+            <span class="badge bg-secondary ms-2" style="font-size: 9px;">{{ lineCount() }} lines</span>
+          }
         </div>
-        <button class="btn btn-sm btn-outline-secondary" (click)="clear()" title="Clear console">
+        <button class="btn btn-sm btn-outline-secondary" (click)="clear()" title="Clear">
           <i class="bi bi-trash"></i>
         </button>
       </div>
       <div class="console-body flex-grow-1" #consoleBody>
-        <pre class="mb-0">{{ webContainer.serverOutput() }}</pre>
+        @for (line of cleanLines(); track $index) {
+          <div class="console-line" [class.line-error]="line.type === 'error'"
+               [class.line-warn]="line.type === 'warn'"
+               [class.line-success]="line.type === 'success'"
+               [class.line-info]="line.type === 'info'">{{ line.text }}</div>
+        }
       </div>
     </div>
   `,
@@ -31,21 +39,38 @@ import { WebContainerService } from '../../core/services/webcontainer.service';
     }
     .console-body {
       overflow-y: auto;
-      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
       font-size: 12px;
       padding: 8px;
     }
-    pre { white-space: pre-wrap; word-break: break-all; color: #d4d4d4; }
+    .console-line {
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #d4d4d4;
+      line-height: 1.5;
+      padding: 0 4px;
+    }
+    .console-line:hover { background: rgba(255,255,255,0.03); }
+    .line-error { color: #f48771; }
+    .line-warn { color: #cca700; }
+    .line-success { color: #89d185; }
+    .line-info { color: #75beff; }
   `],
 })
 export class ConsoleOutputComponent {
   webContainer = inject(WebContainerService);
   private consoleBody = viewChild<ElementRef>('consoleBody');
 
+  cleanLines = computed(() => {
+    const raw = this.webContainer.serverOutput();
+    return this.parseOutput(raw);
+  });
+
+  lineCount = computed(() => this.cleanLines().length);
+
   constructor() {
-    // Auto-scroll to bottom when output changes
     effect(() => {
-      this.webContainer.serverOutput();
+      this.cleanLines(); // track
       setTimeout(() => {
         const el = this.consoleBody()?.nativeElement;
         if (el) el.scrollTop = el.scrollHeight;
@@ -55,5 +80,44 @@ export class ConsoleOutputComponent {
 
   clear(): void {
     this.webContainer.serverOutput.set('');
+  }
+
+  private parseOutput(raw: string): { text: string; type: 'normal' | 'error' | 'warn' | 'success' | 'info' }[] {
+    // Strip ANSI escape codes
+    const stripped = raw.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+                       .replace(/\x1b\][^\x07]*\x07/g, '')   // OSC sequences
+                       .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, ''); // control chars
+
+    const lines = stripped.split('\n');
+    const result: { text: string; type: 'normal' | 'error' | 'warn' | 'success' | 'info' }[] = [];
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+
+      // Skip empty lines, spinner garbage, and noise
+      if (!trimmed) continue;
+      if (/^[\\|/\-]+$/.test(trimmed)) continue;           // spinner chars only
+      if (/^[\s\\|/\-]{0,3}$/.test(trimmed)) continue;     // very short garbage
+      if (trimmed === '|' || trimmed === '/' || trimmed === '-' || trimmed === '\\') continue;
+      if (trimmed.startsWith('npm warn config')) continue;  // npm config warnings
+
+      // Classify line type
+      let type: 'normal' | 'error' | 'warn' | 'success' | 'info' = 'normal';
+      const lower = trimmed.toLowerCase();
+
+      if (lower.includes('error') || lower.includes('failed') || lower.includes('err!')) {
+        type = 'error';
+      } else if (lower.includes('warn') || lower.includes('deprecated')) {
+        type = 'warn';
+      } else if (lower.includes('ready') || lower.includes('success') || lower.includes('added') || lower.includes('compiled')) {
+        type = 'success';
+      } else if (lower.includes('installing') || lower.includes('building') || lower.includes('compiling') || trimmed.startsWith('>') || trimmed.startsWith('$')) {
+        type = 'info';
+      }
+
+      result.push({ text: trimmed, type });
+    }
+
+    return result;
   }
 }

@@ -1,5 +1,8 @@
 import { VirtualFile } from './virtual-file.model';
 
+export type TestDifficulty = 'easy' | 'medium' | 'hard';
+export type TestType = 'positive' | 'negative' | 'edge';
+
 export interface Problem {
   id: string;
   title: string;
@@ -15,6 +18,20 @@ export interface TestResult {
   status: 'passed' | 'failed';
   duration: number;
   errorMessage?: string;
+  difficulty: TestDifficulty;
+  testType: TestType;
+}
+
+export interface CodeQualityRatings {
+  maintainability: number; // 1-10
+  reliability: number;     // 1-10
+  cyclomaticComplexity: 'low' | 'moderate' | 'high';
+}
+
+export interface LlmEvaluation {
+  adjustedScore: number;
+  reasoning: string;
+  codeQuality: CodeQualityRatings;
 }
 
 export interface TestSuite {
@@ -23,4 +40,6 @@ export interface TestSuite {
   failed: number;
   score: number;
   results: TestResult[];
+  llmEvaluation?: LlmEvaluation;
+  finalScore?: number;
 }

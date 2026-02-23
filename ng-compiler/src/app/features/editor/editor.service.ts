@@ -88,7 +88,25 @@ export class FileSystemService {
   private async writeToContainer(path: string, content: string): Promise<void> {
     if (!this.webContainer) return;
     try {
-      await this.webContainer.writeFile(path, content);
+      if (path.endsWith('.component.ts')) {
+        // Inline templateUrl/styleUrl before writing so Vite can compile
+        const inlined = this.inlineTemplateAndStyles(path, content);
+        await this.webContainer.writeFile(path, inlined);
+        // Also write raw HTML/CSS for test specs that read them separately
+      } else {
+        await this.webContainer.writeFile(path, content);
+      }
+
+      // If this is a .component.html or .component.css, also rewrite the companion .ts
+      if (path.endsWith('.component.html') || path.endsWith('.component.css')) {
+        const tsPath = path.replace(/\.(html|css)$/, '.ts');
+        const tsFile = this.files().find((f) => f.path === tsPath);
+        if (tsFile) {
+          const inlined = this.inlineTemplateAndStyles(tsFile.path, tsFile.content);
+          await this.webContainer.writeFile(tsPath, inlined);
+        }
+      }
+
       // Mark as not dirty after successful write
       this.files.update((files) =>
         files.map((f) => (f.path === path ? { ...f, dirty: false } : f))
@@ -98,19 +116,70 @@ export class FileSystemService {
     }
   }
 
+  /**
+   * Takes a .component.ts file's content and replaces templateUrl/styleUrl
+   * with inline template/styles using sibling .html/.css file content.
+   */
+  private inlineTemplateAndStyles(tsPath: string, tsContent: string): string {
+    let result = tsContent;
+    const dir = tsPath.substring(0, tsPath.lastIndexOf('/'));
+    const allFiles = this.files();
+
+    // Replace templateUrl with inline template
+    const templateMatch = result.match(/templateUrl\s*:\s*['"]\.\/([^'"]+)['"]/);
+    if (templateMatch) {
+      const htmlPath = dir + '/' + templateMatch[1];
+      const htmlFile = allFiles.find((f) => f.path === htmlPath);
+      if (htmlFile) {
+        const escaped = htmlFile.content.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+        result = result.replace(templateMatch[0], 'template: `' + escaped + '`');
+      }
+    }
+
+    // Replace styleUrl with inline styles
+    const styleMatch = result.match(/styleUrl\s*:\s*['"]\.\/([^'"]+)['"]/);
+    if (styleMatch) {
+      const cssPath = dir + '/' + styleMatch[1];
+      const cssFile = allFiles.find((f) => f.path === cssPath);
+      if (cssFile) {
+        const escaped = cssFile.content.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+        result = result.replace(styleMatch[0], 'styles: [`' + escaped + '`]');
+      }
+    }
+
+    return result;
+  }
+
   async flushAll(): Promise<void> {
     // Cancel pending debounces and write all dirty files immediately
-    for (const [path, timeout] of this.writeTimeouts) {
+    for (const [, timeout] of this.writeTimeouts) {
       clearTimeout(timeout);
     }
     this.writeTimeouts.clear();
 
     if (!this.webContainer) return;
-    for (const file of this.files()) {
-      if (file.dirty) {
-        await this.writeToContainer(file.path, file.content);
+
+    // Write all files, inlining HTML/CSS into their companion .ts files
+    const allFiles = this.files();
+    const writtenTs = new Set<string>();
+
+    for (const file of allFiles) {
+      if (file.path.endsWith('.component.ts')) {
+        const inlined = this.inlineTemplateAndStyles(file.path, file.content);
+        await this.webContainer.writeFile(file.path, inlined);
+        writtenTs.add(file.path);
       }
     }
+
+    // Write HTML/CSS files too (for test specs that read them)
+    for (const file of allFiles) {
+      if (!file.path.endsWith('.component.ts')) {
+        await this.webContainer.writeFile(file.path, file.content);
+      }
+    }
+
+    // Mark all as not dirty
+    this.files.update((files) => files.map((f) => ({ ...f, dirty: false })));
   }
 
   getFilesByDirectory(): Map<string, VirtualFile[]> {

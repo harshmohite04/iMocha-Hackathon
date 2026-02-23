@@ -44,16 +44,34 @@ import { TodoListComponent } from './todo-list/todo-list.component';
   selector: 'app-root',
   standalone: true,
   imports: [TodoListComponent],
-  template: \`
-    <div style="max-width: 600px; margin: 20px auto;">
-      <h1>My Todo App</h1>
-      <app-todo-list />
-    </div>
-  \`,
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.css',
 })
 export class AppComponent {}
 `,
         language: 'typescript',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/app.component.html',
+        content: `<div class="container">
+  <h1>My Todo App</h1>
+  <app-todo-list />
+</div>
+`,
+        language: 'html',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/app.component.css',
+        content: `.container {
+  max-width: 600px;
+  margin: 20px auto;
+}
+`,
+        language: 'css',
         readOnly: false,
         dirty: false,
       },
@@ -64,16 +82,39 @@ export class AppComponent {}
 @Component({
   selector: 'app-todo-list',
   standalone: true,
-  template: \`
-    <!-- TODO: Implement the todo list template -->
-    <p>Implement the todo list here!</p>
-  \`,
+  templateUrl: './todo-list.component.html',
+  styleUrl: './todo-list.component.css',
 })
 export class TodoListComponent {
   // TODO: Implement todo list logic using signals
+  // Hints:
+  //   - Use signal<string[]>([]) for the todos list
+  //   - Create addTodo() and removeTodo(index) methods
 }
 `,
         language: 'typescript',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/todo-list/todo-list.component.html',
+        content: `<!-- TODO: Implement the todo list template -->
+<!-- Hints:
+  - Add an <input> for typing new todos
+  - Add a button to add the todo
+  - Use @for to loop through todos and display each with a Remove button
+-->
+<p>Implement the todo list here!</p>
+`,
+        language: 'html',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/todo-list/todo-list.component.css',
+        content: `/* TODO: Style the todo list */
+`,
+        language: 'css',
         readOnly: false,
         dirty: false,
       },
@@ -134,16 +175,35 @@ import { CounterComponent } from './counter/counter.component';
   selector: 'app-root',
   standalone: true,
   imports: [CounterComponent],
-  template: \`
-    <div style="max-width: 400px; margin: 20px auto; text-align: center;">
-      <h1>Counter App</h1>
-      <app-counter />
-    </div>
-  \`,
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.css',
 })
 export class AppComponent {}
 `,
         language: 'typescript',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/app.component.html',
+        content: `<div class="container">
+  <h1>Counter App</h1>
+  <app-counter />
+</div>
+`,
+        language: 'html',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/app.component.css',
+        content: `.container {
+  max-width: 400px;
+  margin: 20px auto;
+  text-align: center;
+}
+`,
+        language: 'css',
         readOnly: false,
         dirty: false,
       },
@@ -154,6 +214,12 @@ export class AppComponent {}
 @Injectable({ providedIn: 'root' })
 export class CounterService {
   // TODO: Implement counter service with signals
+  // Requirements:
+  //   - count: a writable signal initialized to 0
+  //   - doubleCount: a computed signal that returns count * 2
+  //   - increment(): increases count by 1
+  //   - decrement(): decreases count by 1
+  //   - reset(): sets count back to 0
 }
 `,
         language: 'typescript',
@@ -168,16 +234,32 @@ import { CounterService } from './counter.service';
 @Component({
   selector: 'app-counter',
   standalone: true,
-  template: \`
-    <!-- TODO: Implement the counter template -->
-    <p>Implement the counter here!</p>
-  \`,
+  templateUrl: './counter.component.html',
+  styleUrl: './counter.component.css',
 })
 export class CounterComponent {
   // TODO: Inject CounterService and wire up the template
 }
 `,
         language: 'typescript',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/counter/counter.component.html',
+        content: `<!-- TODO: Implement the counter template -->
+<!-- Display count, doubleCount, and add Increment/Decrement/Reset buttons -->
+<p>Implement the counter here!</p>
+`,
+        language: 'html',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/counter/counter.component.css',
+        content: `/* TODO: Style the counter component */
+`,
+        language: 'css',
         readOnly: false,
         dirty: false,
       },
@@ -222,12 +304,12 @@ Create a **UserCardComponent** that displays user information using Angular's in
 
 ## Example
 \`\`\`
-┌──────────────────────┐
-│ John Doe      Active │
-│ john@example.com     │
-│ Role: Admin          │
-│ [Toggle Status]      │
-└──────────────────────┘
++------------------------+
+| John Doe        Active |
+| john@example.com       |
+| Role: Admin            |
+| [Toggle Status]        |
++------------------------+
 \`\`\`
 `,
     starterFiles: [
@@ -241,12 +323,8 @@ Create a **UserCardComponent** that displays user information using Angular's in
   selector: 'app-root',
   standalone: true,
   imports: [],
-  template: \`
-    <div style="max-width: 600px; margin: 20px auto;">
-      <h1>User Directory</h1>
-      <!-- TODO: Render user cards -->
-    </div>
-  \`,
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.css',
 })
 export class AppComponent {
   users = signal([
@@ -263,6 +341,28 @@ export class AppComponent {
         dirty: false,
       },
       {
+        path: 'src/app/app.component.html',
+        content: `<div class="container">
+  <h1>User Directory</h1>
+  <!-- TODO: Use @for to render a <app-user-card> for each user -->
+</div>
+`,
+        language: 'html',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/app.component.css',
+        content: `.container {
+  max-width: 600px;
+  margin: 20px auto;
+}
+`,
+        language: 'css',
+        readOnly: false,
+        dirty: false,
+      },
+      {
         path: 'src/app/user-card/user-card.component.ts',
         content: `import { Component, input, output } from '@angular/core';
 
@@ -271,16 +371,32 @@ export class AppComponent {
 @Component({
   selector: 'app-user-card',
   standalone: true,
-  template: \`
-    <!-- TODO: Implement user card template -->
-    <p>Implement the user card here!</p>
-  \`,
+  templateUrl: './user-card.component.html',
+  styleUrl: './user-card.component.css',
 })
 export class UserCardComponent {
   // TODO: Add input for user and output for toggle event
 }
 `,
         language: 'typescript',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/user-card/user-card.component.html',
+        content: `<!-- TODO: Implement user card template -->
+<!-- Display name, email, role, active/inactive badge, and toggle button -->
+<p>Implement the user card here!</p>
+`,
+        language: 'html',
+        readOnly: false,
+        dirty: false,
+      },
+      {
+        path: 'src/app/user-card/user-card.component.css',
+        content: `/* TODO: Style the user card */
+`,
+        language: 'css',
         readOnly: false,
         dirty: false,
       },
@@ -306,37 +422,75 @@ export const PROBLEM_TEST_SPECS: Record<string, object[]> = {
       name: 'todo-list.spec',
       content: `
 describe('TodoListComponent', function() {
-  it('should have an addTodo method or similar', function() {
-    // We test the source code content since we can't run Angular TestBed in Node
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
-    expect(source).toContain('signal');
+  it('should use signal for todos state', { difficulty: 'easy', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
+    expect(source).toMatch(/signal\\s*<\\s*string\\s*\\[\\s*\\]\\s*>/);
   });
 
-  it('should use @for in the template', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
-    expect(source).toContain('@for');
+  it('should use @for in template', { difficulty: 'easy', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/todo-list/todo-list.component.html', 'utf-8');
+    expect(template).toMatch(/@for\\s*\\(/);
   });
 
-  it('should have an input field in template', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
-    expect(source).toContain('input');
+  it('should have input field for new todos', { difficulty: 'easy', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/todo-list/todo-list.component.html', 'utf-8');
+    expect(template).toMatch(/<input[^>]*>/);
   });
 
-  it('should have add functionality', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
-    const hasAdd = source.includes('add') || source.includes('push') || source.includes('update');
-    expect(hasAdd).toBeTruthy();
+  it('should have addTodo method with signal update', { difficulty: 'easy', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
+    expect(source).toMatch(/add[Tt]odo\\s*\\(/);
+    var hasUpdate = source.match(/\\.update\\s*\\(/) || source.match(/\\.set\\s*\\(/);
+    expect(!!hasUpdate).toBeTruthy();
   });
 
-  it('should have remove functionality', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
-    const hasRemove = source.includes('remove') || source.includes('filter') || source.includes('splice');
-    expect(hasRemove).toBeTruthy();
+  it('should have removeTodo method with filter or splice', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
+    expect(source).toMatch(/remove[Tt]odo\\s*\\(/);
+    var hasFilterOrSplice = source.match(/\\.filter\\s*\\(/) || source.match(/\\.splice\\s*\\(/);
+    expect(!!hasFilterOrSplice).toBeTruthy();
+  });
+
+  it('should have Add button with click handler', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/todo-list/todo-list.component.html', 'utf-8');
+    expect(template).toMatch(/<button[^>]*\\(click\\)[^>]*>[^<]*[Aa]dd[^<]*<\\/button>/);
+  });
+
+  it('should have Remove button inside @for loop', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/todo-list/todo-list.component.html', 'utf-8');
+    var forIdx = template.indexOf('@for');
+    var removeIdx = template.toLowerCase().indexOf('remove', forIdx);
+    expect(forIdx).not.toBe(-1);
+    expect(removeIdx).toBeGreaterThan(forIdx);
+  });
+
+  it('should prevent empty todos', { difficulty: 'medium', testType: 'negative' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
+    var hasTrimCheck = source.match(/\\.trim\\s*\\(\\)/) && (source.match(/===\\s*['"]\\s*['"]/) || source.match(/\\.length/) || source.match(/!\\s*\\w+/));
+    var hasGuard = source.match(/if\\s*\\(/) || source.match(/return\\s*;/);
+    expect(!!(hasTrimCheck || hasGuard)).toBeTruthy();
+  });
+
+  it('should clear input after adding todo', { difficulty: 'medium', testType: 'edge' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/todo-list/todo-list.component.ts', 'utf-8');
+    var hasClear = source.match(/=\\s*['"]\\s*['"]/) || source.match(/\\.set\\s*\\(\\s*['"]\\s*['"]\\s*\\)/) || source.match(/\\.nativeElement\\.value\\s*=\\s*['"]['"]/);
+
+    expect(!!hasClear).toBeTruthy();
+  });
+
+  it('should use track in @for', { difficulty: 'hard', testType: 'edge' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/todo-list/todo-list.component.html', 'utf-8');
+    expect(template).toMatch(/@for\\s*\\([^{]*track/);
   });
 });
 `,
@@ -347,58 +501,80 @@ describe('TodoListComponent', function() {
       name: 'counter.spec',
       content: `
 describe('CounterService', function() {
-  it('should have a count signal', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
-    expect(source).toContain('signal');
-    expect(source).toContain('count');
+  it('should have a count signal initialized to 0', { difficulty: 'easy', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
+    expect(source).toMatch(/count\\s*=\\s*signal\\s*[<(]/);
+    expect(source).toMatch(/signal\\s*(<\\s*number\\s*>)?\\s*\\(\\s*0\\s*\\)/);
   });
 
-  it('should have increment method', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
-    expect(source).toContain('increment');
+  it('should have increment method that increases count', { difficulty: 'easy', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
+    expect(source).toMatch(/increment\\s*\\(\\s*\\)/);
+    var hasLogic = source.match(/\\.update\\s*\\(/) || source.match(/\\.set\\s*\\(/);
+    expect(!!hasLogic).toBeTruthy();
   });
 
-  it('should have decrement method', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
-    expect(source).toContain('decrement');
+  it('should have decrement method that decreases count', { difficulty: 'easy', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
+    expect(source).toMatch(/decrement\\s*\\(\\s*\\)/);
+    var hasLogic = source.match(/\\.update\\s*\\(/) || source.match(/\\.set\\s*\\(/);
+    expect(!!hasLogic).toBeTruthy();
   });
 
-  it('should have reset method', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
-    expect(source).toContain('reset');
+  it('should have reset method that sets count to 0', { difficulty: 'easy', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
+    expect(source).toMatch(/reset\\s*\\(\\s*\\)/);
+    expect(source).toMatch(/\\.set\\s*\\(\\s*0\\s*\\)/);
   });
 
-  it('should have doubleCount computed signal', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
-    expect(source).toContain('computed');
-    expect(source).toContain('doubleCount');
+  it('should have doubleCount as computed signal', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
+    expect(source).toMatch(/doubleCount\\s*=\\s*computed\\s*\\(/);
+    expect(source).toMatch(/\\*\\s*2/);
+  });
+
+  it('should use Injectable with providedIn root', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/counter/counter.service.ts', 'utf-8');
+    expect(source).toMatch(/@Injectable\\s*\\(\\s*\\{[^}]*providedIn\\s*:\\s*['"]root['"]/);
   });
 });
 
 describe('CounterComponent', function() {
-  it('should inject CounterService', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.component.ts', 'utf-8');
-    expect(source).toContain('inject');
-    expect(source).toContain('CounterService');
+  it('should inject CounterService via inject()', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/counter/counter.component.ts', 'utf-8');
+    expect(source).toMatch(/inject\\s*\\(\\s*CounterService\\s*\\)/);
   });
 
-  it('should display count in template', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.component.ts', 'utf-8');
-    expect(source).toContain('count');
+  it('should display count and doubleCount in template', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/counter/counter.component.html', 'utf-8');
+    expect(template).toMatch(/count/i);
+    expect(template).toMatch(/double/i);
   });
 
-  it('should have increment button', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/counter/counter.component.ts', 'utf-8');
-    const hasButton = source.includes('Increment') || source.includes('increment');
-    expect(hasButton).toBeTruthy();
+  it('should have Increment, Decrement, and Reset buttons', { difficulty: 'medium', testType: 'edge' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/counter/counter.component.html', 'utf-8');
+    var lower = template.toLowerCase();
+    expect(lower).toContain('increment');
+    expect(lower).toContain('decrement');
+    expect(lower).toContain('reset');
+  });
+
+  it('should bind click handlers to service methods', { difficulty: 'hard', testType: 'edge' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/counter/counter.component.html', 'utf-8');
+    var hasIncrClick = template.match(/\\(click\\)\\s*=\\s*["'][^"']*increment/);
+    var hasDecrClick = template.match(/\\(click\\)\\s*=\\s*["'][^"']*decrement/);
+    var hasResetClick = template.match(/\\(click\\)\\s*=\\s*["'][^"']*reset/);
+    expect(!!(hasIncrClick && hasDecrClick && hasResetClick)).toBeTruthy();
   });
 });
 `,
@@ -409,50 +585,72 @@ describe('CounterComponent', function() {
       name: 'user-card.spec',
       content: `
 describe('UserCardComponent', function() {
-  it('should use input signal for user', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
-    expect(source).toContain('input');
+  it('should use input() signal for user data', { difficulty: 'easy', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
+    expect(source).toMatch(/=\\s*input\\s*[<(]/);
   });
 
-  it('should use output for toggle event', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
-    expect(source).toContain('output');
+  it('should use output() for toggle event', { difficulty: 'easy', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
+    expect(source).toMatch(/=\\s*output\\s*[<(]/);
   });
 
-  it('should display user name in template', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
-    expect(source).toContain('name');
+  it('should define a User interface or type', { difficulty: 'easy', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
+    var appSource = fs.readFileSync('src/app/app.component.ts', 'utf-8');
+    var hasInterface = source.match(/interface\\s+User/) || appSource.match(/interface\\s+User/) || source.match(/type\\s+User\\s*=/);
+    expect(!!hasInterface).toBeTruthy();
   });
 
-  it('should show active/inactive status', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
-    const hasStatus = source.includes('Active') || source.includes('active') || source.includes('Inactive');
-    expect(hasStatus).toBeTruthy();
+  it('should display user name in template', { difficulty: 'easy', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/user-card/user-card.component.html', 'utf-8');
+    expect(template).toMatch(/\\{\\{[^}]*name[^}]*\\}\\}/);
   });
 
-  it('should have toggle button', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/user-card/user-card.component.ts', 'utf-8');
-    const hasToggle = source.includes('Toggle') || source.includes('toggle');
-    expect(hasToggle).toBeTruthy();
+  it('should display user email in template', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/user-card/user-card.component.html', 'utf-8');
+    expect(template).toMatch(/\\{\\{[^}]*email[^}]*\\}\\}/);
+  });
+
+  it('should display user role in template', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/user-card/user-card.component.html', 'utf-8');
+    expect(template).toMatch(/\\{\\{[^}]*role[^}]*\\}\\}/);
+  });
+
+  it('should show Active or Inactive badge conditionally', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/user-card/user-card.component.html', 'utf-8');
+    var hasConditional = template.match(/@if\\s*\\([^)]*active/) || template.match(/\\[class/) || template.match(/\\*ngIf/) || template.match(/\\?\\s*['"]Active['"]\\s*:\\s*['"]Inactive['"]/);
+    expect(!!hasConditional).toBeTruthy();
+  });
+
+  it('should have Toggle Status button with click handler', { difficulty: 'medium', testType: 'edge' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/user-card/user-card.component.html', 'utf-8');
+    expect(template).toMatch(/<button[^>]*\\(click\\)/);
+    var lower = template.toLowerCase();
+    expect(lower).toContain('toggle');
   });
 });
 
 describe('AppComponent', function() {
-  it('should import UserCardComponent', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/app.component.ts', 'utf-8');
-    expect(source).toContain('UserCardComponent');
+  it('should import UserCardComponent in imports array', { difficulty: 'medium', testType: 'positive' }, function() {
+    var fs = require('fs');
+    var source = fs.readFileSync('src/app/app.component.ts', 'utf-8');
+    expect(source).toMatch(/imports\\s*:\\s*\\[[^\\]]*UserCardComponent/);
   });
 
-  it('should use @for to render cards', function() {
-    const fs = require('fs');
-    const source = fs.readFileSync('src/app/app.component.ts', 'utf-8');
-    expect(source).toContain('@for');
+  it('should use @for to render user cards with track', { difficulty: 'hard', testType: 'edge' }, function() {
+    var fs = require('fs');
+    var template = fs.readFileSync('src/app/app.component.html', 'utf-8');
+    expect(template).toMatch(/@for\\s*\\([^{]*track/);
+    expect(template).toMatch(/<app-user-card/);
   });
 });
 `,

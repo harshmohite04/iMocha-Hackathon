@@ -52,78 +52,229 @@
 <!-- Submission Result -->
 @if (assessment.isSubmitted()) {
   <div class="submission-overlay">
-    <div class="card shadow-lg text-center" style="max-width: 500px; width: 90%;">
+    <div class="card shadow-lg" style="max-width: 580px; width: 95%;">
       <div class="card-body p-4">
         @if (assessment.finalScore(); as score) {
-          <div class="mb-3">
+          <div class="text-center mb-3">
             @if (score.passed === score.total && score.total > 0) {
-              <i class="bi bi-trophy-fill text-warning" style="font-size: 4rem;"></i>
+              <i class="bi bi-trophy-fill text-warning" style="font-size: 3.5rem;"></i>
             } @else {
-              <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+              <i class="bi bi-check-circle-fill text-success" style="font-size: 3.5rem;"></i>
+            }
+            <h3 class="mt-2 mb-0">Assessment Submitted!</h3>
+          </div>
+
+          <!-- Test Score Section -->
+          <div class="score-section mb-3 p-3 rounded" style="background: #f8f9fa;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="mb-0"><i class="bi bi-check2-square me-1"></i> Test Score</h6>
+              <span class="fw-bold" style="font-size: 1.25rem;"
+                    [class.text-success]="score.passed === score.total"
+                    [class.text-warning]="score.passed > 0 && score.passed < score.total"
+                    [class.text-danger]="score.passed === 0 && score.total > 0">
+                {{ score.score }} / {{ assessment.currentProblem()?.maxScore }}
+              </span>
+            </div>
+            <div class="progress mb-2" style="height: 8px;">
+              <div class="progress-bar bg-success" [style.width.%]="score.total > 0 ? (score.passed / score.total) * 100 : 0"></div>
+              <div class="progress-bar bg-danger" [style.width.%]="score.total > 0 ? (score.failed / score.total) * 100 : 0"></div>
+            </div>
+            <small class="text-muted">{{ score.passed }} of {{ score.total }} tests passed</small>
+          </div>
+
+          <!-- AI Code Review Section -->
+          <div class="score-section mb-3 p-3 rounded" style="background: #f0f4ff;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="mb-0"><i class="bi bi-robot me-1"></i> AI Code Review</h6>
+              @if (assessment.isEvaluatingLlm()) {
+                <span class="d-flex align-items-center gap-1 text-primary">
+                  <span class="spinner-border spinner-border-sm" style="width: 14px; height: 14px;"></span>
+                  Analyzing...
+                </span>
+              } @else if (score.llmEvaluation) {
+                <span class="fw-bold" style="font-size: 1.25rem;"
+                      [class.text-success]="score.llmEvaluation.adjustedScore >= score.score"
+                      [class.text-warning]="score.llmEvaluation.adjustedScore < score.score">
+                  {{ score.llmEvaluation.adjustedScore }} / {{ assessment.currentProblem()?.maxScore }}
+                </span>
+              } @else {
+                <small class="text-muted">No API key provided</small>
+              }
+            </div>
+            @if (score.llmEvaluation) {
+              <div class="mt-2 p-2 rounded" style="background: rgba(255,255,255,0.7); font-size: 13px;">
+                <div class="mb-2"><strong>Reasoning:</strong> {{ score.llmEvaluation.reasoning }}</div>
+                <div class="d-flex gap-3 flex-wrap">
+                  <div class="text-center">
+                    <div class="fw-bold" style="font-size: 1.1rem;"
+                         [class.text-success]="score.llmEvaluation.codeQuality.maintainability >= 7"
+                         [class.text-warning]="score.llmEvaluation.codeQuality.maintainability >= 4 && score.llmEvaluation.codeQuality.maintainability < 7"
+                         [class.text-danger]="score.llmEvaluation.codeQuality.maintainability < 4">
+                      {{ score.llmEvaluation.codeQuality.maintainability }}/10
+                    </div>
+                    <small class="text-muted">Maintainability</small>
+                  </div>
+                  <div class="text-center">
+                    <div class="fw-bold" style="font-size: 1.1rem;"
+                         [class.text-success]="score.llmEvaluation.codeQuality.reliability >= 7"
+                         [class.text-warning]="score.llmEvaluation.codeQuality.reliability >= 4 && score.llmEvaluation.codeQuality.reliability < 7"
+                         [class.text-danger]="score.llmEvaluation.codeQuality.reliability < 4">
+                      {{ score.llmEvaluation.codeQuality.reliability }}/10
+                    </div>
+                    <small class="text-muted">Reliability</small>
+                  </div>
+                  <div class="text-center">
+                    <div class="fw-bold" style="font-size: 1.1rem;"
+                         [class.text-success]="score.llmEvaluation.codeQuality.cyclomaticComplexity === 'low'"
+                         [class.text-warning]="score.llmEvaluation.codeQuality.cyclomaticComplexity === 'moderate'"
+                         [class.text-danger]="score.llmEvaluation.codeQuality.cyclomaticComplexity === 'high'">
+                      {{ score.llmEvaluation.codeQuality.cyclomaticComplexity }}
+                    </div>
+                    <small class="text-muted">Complexity</small>
+                  </div>
+                </div>
+              </div>
+            } @else if (!assessment.isEvaluatingLlm()) {
+              <small class="text-muted">Add an Anthropic API key on the problem selector to enable AI-powered code review with partial credit scoring.</small>
             }
           </div>
-          <h2>Assessment Submitted!</h2>
-          <div class="display-4 fw-bold my-3"
-               [class.text-success]="score.passed === score.total"
-               [class.text-warning]="score.passed > 0 && score.passed < score.total"
-               [class.text-danger]="score.passed === 0 && score.total > 0">
-            {{ score.score }} / {{ assessment.currentProblem()?.maxScore }} pts
+
+          <!-- Final Score -->
+          <div class="text-center p-3 rounded mb-3"
+               [style.background]="score.llmEvaluation ? '#e8f5e9' : '#f5f5f5'">
+            <small class="text-uppercase fw-bold text-muted d-block mb-1">Final Score</small>
+            <div class="display-5 fw-bold"
+                 [class.text-success]="(score.finalScore ?? score.score) >= (assessment.currentProblem()?.maxScore ?? 100) * 0.8"
+                 [class.text-warning]="(score.finalScore ?? score.score) >= (assessment.currentProblem()?.maxScore ?? 100) * 0.4 && (score.finalScore ?? score.score) < (assessment.currentProblem()?.maxScore ?? 100) * 0.8"
+                 [class.text-danger]="(score.finalScore ?? score.score) < (assessment.currentProblem()?.maxScore ?? 100) * 0.4">
+              {{ score.finalScore ?? score.score }} / {{ assessment.currentProblem()?.maxScore }} pts
+            </div>
+            @if (score.llmEvaluation) {
+              <small class="text-muted">AI-adjusted score</small>
+            }
           </div>
-          <p class="text-muted">{{ score.passed }} of {{ score.total }} tests passed</p>
-          <div class="progress mb-3" style="height: 10px;">
-            <div class="progress-bar bg-success" [style.width.%]="score.total > 0 ? (score.passed / score.total) * 100 : 0"></div>
+
+          <div class="text-center">
+            <button class="btn btn-primary" (click)="backToProblems()">
+              <i class="bi bi-arrow-left me-1"></i> Back to Problems
+            </button>
           </div>
-          <button class="btn btn-primary" (click)="backToProblems()">
-            <i class="bi bi-arrow-left me-1"></i> Back to Problems
-          </button>
         }
       </div>
     </div>
   </div>
 }
 
-<!-- Main Workspace (shown when problem is loaded and not submitted) -->
+<!-- Main Workspace -->
 @if (assessment.currentProblem() && !assessment.isSubmitted()) {
-  <div class="workspace-layout vh-100 d-flex flex-column" [class.dark-theme]="isDarkTheme()">
-    <!-- Header with tabs, timer, theme -->
+  <div class="workspace-layout vh-100 d-flex flex-column">
+    <!-- Top: Header with tabs, timer, theme -->
     <app-workspace-header
       [isDarkTheme]="isDarkTheme()"
       (themeToggle)="toggleTheme()" />
 
-    <!-- Main content area -->
-    <div class="flex-grow-1 overflow-hidden">
-      <app-split-pane direction="horizontal" [initialSplit]="25">
-        <!-- Left: Problem + File Tree -->
-        <div first-pane class="h-100 d-flex flex-column">
-          <app-split-pane direction="vertical" [initialSplit]="60">
-            <app-problem-panel first-pane />
-            <app-file-tree second-pane />
-          </app-split-pane>
+    <!-- Middle: Main content (sidebar + editor) -->
+    <div class="main-row flex-grow-1 d-flex overflow-hidden">
+      <!-- Left Sidebar: Problem + File Tree -->
+      <div class="sidebar d-flex flex-column" [style.width.px]="sidebarWidth()">
+        <!-- Sidebar tabs -->
+        <div class="sidebar-tabs d-flex">
+          <button class="sidebar-tab" [class.active]="sidebarTab() === 'problem'"
+                  (click)="sidebarTab.set('problem')">
+            <i class="bi bi-book me-1"></i> Problem
+          </button>
+          <button class="sidebar-tab" [class.active]="sidebarTab() === 'files'"
+                  (click)="sidebarTab.set('files')">
+            <i class="bi bi-folder2-open me-1"></i> Files
+          </button>
         </div>
+        <div class="sidebar-content flex-grow-1 overflow-hidden">
+          @if (sidebarTab() === 'problem') {
+            <app-problem-panel />
+          } @else {
+            <app-file-tree />
+          }
+        </div>
+      </div>
 
-        <!-- Right: Editor + Preview + Tests -->
-        <div second-pane class="h-100">
-          <app-split-pane direction="horizontal" [initialSplit]="55">
-            <!-- Center: Code Editor -->
-            <div first-pane class="h-100">
-              <app-code-editor [theme]="isDarkTheme() ? 'vs-dark' : 'vs'" />
-            </div>
+      <!-- Sidebar resize handle -->
+      <div class="resize-handle-v" (mousedown)="startSidebarDrag($event)"></div>
 
-            <!-- Right: Preview + Tests + Console -->
-            <div second-pane class="h-100 d-flex flex-column">
-              <app-split-pane direction="vertical" [initialSplit]="50">
-                <app-preview-panel first-pane />
-                <div second-pane class="d-flex flex-column h-100">
-                  <app-split-pane direction="vertical" [initialSplit]="60">
-                    <app-test-results-panel first-pane />
-                    <app-console-output second-pane />
-                  </app-split-pane>
+      <!-- Right: Code Editor -->
+      <div class="editor-area flex-grow-1 d-flex flex-column overflow-hidden">
+        <app-code-editor [theme]="isDarkTheme() ? 'vs-dark' : 'vs'" />
+      </div>
+    </div>
+
+    <!-- Bottom Panel resize handle -->
+    <div class="resize-handle-h" (mousedown)="startBottomDrag($event)"></div>
+
+    <!-- Bottom: Tabbed Panel (Console / Preview / Tests) -->
+    <div class="bottom-panel d-flex flex-column" [style.height.px]="bottomPanelHeight()">
+      <div class="bottom-tabs d-flex align-items-center">
+        <button class="bottom-tab" [class.active]="bottomTab() === 'console'"
+                (click)="bottomTab.set('console')">
+          <i class="bi bi-terminal me-1"></i> Console
+          @if (appConsole.count() > 0) {
+            <span class="badge bg-secondary ms-1" style="font-size: 9px;">{{ appConsole.count() }}</span>
+          }
+          @if (appConsole.errorCount() > 0) {
+            <span class="badge bg-danger ms-1" style="font-size: 9px;">{{ appConsole.errorCount() }}</span>
+          }
+        </button>
+        <button class="bottom-tab" [class.active]="bottomTab() === 'preview'"
+                (click)="bottomTab.set('preview')">
+          <i class="bi bi-eye me-1"></i> Preview
+          @if (webContainer.previewUrl()) {
+            <span class="badge bg-success ms-1" style="font-size: 9px;">Live</span>
+          }
+        </button>
+        <button class="bottom-tab" [class.active]="bottomTab() === 'tests'"
+                (click)="bottomTab.set('tests')">
+          <i class="bi bi-check2-square me-1"></i> Tests
+        </button>
+        <button class="bottom-tab" [class.active]="bottomTab() === 'errors'"
+                (click)="bottomTab.set('errors')">
+          <i class="bi bi-exclamation-triangle me-1"></i> Problems
+          @if (compilation.hasErrors()) {
+            <span class="badge bg-danger ms-1" style="font-size: 9px;">{{ compilation.errors().length }}</span>
+          }
+        </button>
+
+        <!-- Right side: collapse/expand -->
+        <div class="ms-auto d-flex align-items-center gap-1 pe-2">
+          <button class="bottom-tab-btn" (click)="toggleBottomPanel()" title="Toggle panel">
+            <i [class]="bottomPanelHeight() > 50 ? 'bi bi-chevron-down' : 'bi bi-chevron-up'"></i>
+          </button>
+        </div>
+      </div>
+      <div class="bottom-content flex-grow-1 overflow-hidden">
+        @switch (bottomTab()) {
+          @case ('console') { <app-app-console /> }
+          @case ('preview') { <app-preview-panel /> }
+          @case ('tests') { <app-test-results-panel /> }
+          @case ('errors') {
+            <div class="errors-panel p-2">
+              @if (compilation.errors().length === 0) {
+                <div class="text-center text-muted py-3">
+                  <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                  <p class="mt-2 mb-0">No problems detected</p>
                 </div>
-              </app-split-pane>
+              } @else {
+                @for (error of compilation.errors(); track $index) {
+                  <div class="error-row d-flex align-items-start p-2 mb-1">
+                    <i class="bi bi-x-circle-fill text-danger me-2 mt-1"></i>
+                    <div>
+                      <code class="text-warning">{{ error.file }}:{{ error.line }}:{{ error.column }}</code>
+                      <span class="ms-2 text-light">{{ error.message }}</span>
+                    </div>
+                  </div>
+                }
+              }
             </div>
-          </app-split-pane>
-        </div>
-      </app-split-pane>
+          }
+        }
+      </div>
     </div>
 
     <!-- Bottom Toolbar -->
